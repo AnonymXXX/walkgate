@@ -76,9 +76,7 @@ final class SessionController: ObservableObject {
   }
 
   var progress: Double {
-    let total = snapshot.phase == .working ? settings.workSeconds : settings.breakSeconds
-    guard total > 0 else { return 0 }
-    return 1 - (Double(snapshot.remainingSeconds) / Double(total))
+    engine.progress
   }
 
   func startBreakNow() {

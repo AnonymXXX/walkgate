@@ -3,6 +3,26 @@ import XCTest
 @testable import WalkGateCore
 
 final class SessionEngineTests: XCTestCase {
+  func testProgressUsesCurrentPhaseDuration() {
+    var engine = SessionEngine(
+      settings: SessionSettings(workSeconds: 100, breakSeconds: 4, deferralSeconds: 2))
+    XCTAssertEqual(engine.progress, 0)
+    engine.pauseForMeeting(seconds: 200)
+    for _ in 0..<100 { engine.tick(isUserIdle: false) }
+    XCTAssertEqual(engine.progress, 0.5)
+    engine.startBreakNow()
+    XCTAssertEqual(engine.progress, 0)
+    engine.tick(isUserIdle: false)
+    XCTAssertEqual(engine.progress, 0)
+    engine.tick(isUserIdle: true)
+    XCTAssertEqual(engine.progress, 0.25)
+    XCTAssertTrue(engine.deferBreak())
+    XCTAssertEqual(engine.progress, 0)
+    engine.tick(isUserIdle: false)
+    XCTAssertEqual(engine.progress, 0.5)
+    engine.tick(isUserIdle: false)
+    XCTAssertEqual(engine.progress, 0)
+  }
   private let settings = SessionSettings(
     workSeconds: 3,
     breakSeconds: 2,

@@ -56,6 +56,11 @@ public struct SessionSnapshot: Equatable, Sendable {
 public struct SessionEngine: Sendable {
   public private(set) var settings: SessionSettings
   public private(set) var snapshot: SessionSnapshot
+  public private(set) var phaseDuration: Int
+
+  public var progress: Double {
+    min(1, max(0, 1 - Double(snapshot.remainingSeconds) / Double(phaseDuration)))
+  }
 
   public init(
     settings: SessionSettings = SessionSettings(),
@@ -63,6 +68,7 @@ public struct SessionEngine: Sendable {
     skippedBreaks: Int = 0
   ) {
     self.settings = settings
+    self.phaseDuration = settings.workSeconds
     self.snapshot = SessionSnapshot(
       phase: .working,
       remainingSeconds: settings.workSeconds,
@@ -78,6 +84,7 @@ public struct SessionEngine: Sendable {
     case .working:
       let remaining = max(snapshot.remainingSeconds - 1, 0)
       if remaining == 0 {
+        phaseDuration = settings.breakSeconds
         snapshot = replacing(phase: .breakGate, remainingSeconds: settings.breakSeconds)
         return .breakBecameDue
       }
@@ -92,6 +99,7 @@ public struct SessionEngine: Sendable {
       guard isUserIdle else { return .none }
       let remaining = max(snapshot.remainingSeconds - 1, 0)
       if remaining == 0 {
+        phaseDuration = settings.workSeconds
         snapshot = SessionSnapshot(
           phase: .working,
           remainingSeconds: settings.workSeconds,
@@ -108,12 +116,14 @@ public struct SessionEngine: Sendable {
   }
 
   public mutating func startBreakNow() {
+    phaseDuration = settings.breakSeconds
     snapshot = replacing(phase: .breakGate, remainingSeconds: settings.breakSeconds)
   }
 
   @discardableResult
   public mutating func deferBreak() -> Bool {
     guard snapshot.phase == .breakGate, !snapshot.deferralUsed else { return false }
+    phaseDuration = settings.deferralSeconds
     snapshot = replacing(
       phase: .working,
       remainingSeconds: settings.deferralSeconds,
@@ -124,6 +134,7 @@ public struct SessionEngine: Sendable {
 
   public mutating func skipBreak() {
     guard snapshot.phase == .breakGate else { return }
+    phaseDuration = settings.workSeconds
     snapshot = SessionSnapshot(
       phase: .working,
       remainingSeconds: settings.workSeconds,
@@ -134,6 +145,7 @@ public struct SessionEngine: Sendable {
   }
 
   public mutating func pauseForMeeting(seconds: Int) {
+    phaseDuration = max(seconds, 1)
     snapshot = SessionSnapshot(
       phase: .working,
       remainingSeconds: max(seconds, 1),
@@ -146,6 +158,7 @@ public struct SessionEngine: Sendable {
   public mutating func updateSettings(_ settings: SessionSettings) {
     self.settings = settings
     let remaining = snapshot.phase == .working ? settings.workSeconds : settings.breakSeconds
+    phaseDuration = remaining
     snapshot = replacing(remainingSeconds: remaining)
   }
 

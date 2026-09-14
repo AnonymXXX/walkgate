@@ -19,6 +19,18 @@ struct MenuBarView: View {
         countdown
 
         primaryAction
+        if session.snapshot.phase == .working {
+          Menu {
+            Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
+            Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
+            Button("安静 90 分钟") { session.pauseForMeeting(minutes: 90) }
+          } label: {
+            Label("会议模式", systemImage: "video")
+              .font(.system(size: 13))
+          }
+          .menuStyle(.borderlessButton)
+          .fixedSize()
+        }
 
       }
       .padding(.horizontal, 24)
@@ -36,7 +48,7 @@ struct MenuBarView: View {
     .environment(\.colorScheme, .dark)
     .background {
       ZStack {
-        Rectangle().fill(Color(red: 0.09, green: 0.13, blue: 0.19))
+        Rectangle().fill(.ultraThinMaterial)
         LinearGradient(
           colors: [
             Color.blue.opacity(0.24),
@@ -50,7 +62,7 @@ struct MenuBarView: View {
     }
     .overlay {
       RoundedRectangle(cornerRadius: 16)
-        .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+        .strokeBorder(.white.opacity(0.06), lineWidth: 0.5)
         .allowsHitTesting(false)
     }
   }
@@ -61,7 +73,7 @@ struct MenuBarView: View {
         .stroke(Color(red: 0.25, green: 0.31, blue: 0.39), lineWidth: 9)
 
       Circle()
-        .trim(from: 0, to: remainingProgress)
+        .trim(from: 0, to: session.progress)
         .stroke(
           LinearGradient(
             colors: [Color(red: 0.16, green: 0.59, blue: 1), .blue], startPoint: .top,
@@ -81,7 +93,7 @@ struct MenuBarView: View {
     }
     .frame(width: 128, height: 128)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("剩余时间进度，\(session.formattedRemaining)")
+    .accessibilityLabel("已完成 \(Int(session.progress * 100))%，剩余 \(session.formattedRemaining)")
   }
 
   private var countdown: some View {
@@ -152,10 +164,6 @@ struct MenuBarView: View {
       .buttonStyle(.plain)
       .onHover { updateHover(.quit, isHovering: $0) }
     }
-  }
-
-  private var remainingProgress: Double {
-    max(0.015, 1 - session.progress)
   }
 
   private var countdownSubtitle: String {

@@ -7,8 +7,8 @@ struct CoffeeIllustration: View {
       context.scaleBy(x: scale, y: size.height / 58)
       var handle = Path()
       handle.addRoundedRect(
-        in: CGRect(x: 33, y: 29, width: 15, height: 18), cornerSize: CGSize(width: 8, height: 8))
-      context.stroke(handle, with: .color(Color(red: 0.7, green: 0.83, blue: 1)), lineWidth: 4)
+        in: CGRect(x: 34, y: 32, width: 11, height: 13), cornerSize: CGSize(width: 6, height: 6))
+      context.stroke(handle, with: .color(Color(red: 0.7, green: 0.83, blue: 1)), lineWidth: 3)
       var cup = Path()
       cup.move(to: CGPoint(x: 5, y: 27))
       cup.addLine(to: CGPoint(x: 37, y: 27))
@@ -24,7 +24,7 @@ struct CoffeeIllustration: View {
           ]), startPoint: CGPoint(x: 5, y: 27), endPoint: CGPoint(x: 37, y: 55)))
       context.stroke(
         cup, with: .color(Color(red: 0.87, green: 0.94, blue: 1)),
-        style: StrokeStyle(lineWidth: 4, lineJoin: .round))
+        style: StrokeStyle(lineWidth: 3, lineJoin: .round))
       for x in [17.0, 28.0] {
         var steam = Path()
         steam.move(to: CGPoint(x: x, y: 18))
