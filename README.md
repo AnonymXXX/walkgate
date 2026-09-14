@@ -1,5 +1,9 @@
 # WalkGate
 
+<p align="center">
+  <img src="Resources/WalkGateIcon.png" width="128" alt="WalkGate App 图标">
+</p>
+
 一款原生、轻量的 macOS 菜单栏久坐提醒工具。
 
 普通倒计时很容易被忽略。WalkGate 会在工作周期结束后开启“休息闸门”：用低调的右下角卡片提示起身，并暂时拦截桌面操作。只有真正离开键盘和鼠标，休息时间才会累计；达到最低休息时长后，由你回来手动进入下一轮工作。
@@ -46,7 +50,7 @@
 ### 首次打开提示“Apple 无法验证”
 
 <p align="center">
-  <img src="docs/images/macos-gatekeeper-warning.png" width="420" alt="macOS 无法验证 WalkGate 的安全提示">
+  <img src="docs/images/macos-gatekeeper-warning.png" width="340" alt="macOS 无法验证 WalkGate 的安全提示">
 </p>
 
 当前安装包采用 ad-hoc 签名，尚未经过 Apple Developer ID 公证，因此首次打开时可能出现上图提示。请仅在确认安装包来自本仓库时继续：

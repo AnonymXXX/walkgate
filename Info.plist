@@ -6,6 +6,8 @@
     <string>zh_CN</string>
     <key>CFBundleExecutable</key>
     <string>WalkGate</string>
+    <key>CFBundleIconFile</key>
+    <string>WalkGateIcon.icns</string>
     <key>CFBundleIdentifier</key>
     <string>com.y0num.walkgate</string>
     <key>CFBundleInfoDictionaryVersion</key>

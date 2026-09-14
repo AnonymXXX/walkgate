@@ -18,6 +18,7 @@ fi
 /bin/mkdir -p "$contents_path/MacOS" "$contents_path/Resources"
 /bin/cp "$bin_path/WalkGate" "$contents_path/MacOS/WalkGate"
 /bin/cp "$project_root/Info.plist" "$contents_path/Info.plist"
+/bin/cp "$project_root/Resources/WalkGateIcon.icns" "$contents_path/Resources/WalkGateIcon.icns"
 /usr/bin/codesign --force --deep --sign - "$app_path"
 
 echo "$app_path"
