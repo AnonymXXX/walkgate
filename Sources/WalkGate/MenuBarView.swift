@@ -40,6 +40,7 @@ struct MenuBarView: View {
       .padding(.bottom, 20)
 
       Divider()
+        .opacity(0.24)
 
       footer
         .padding(.horizontal, 16)
@@ -50,8 +51,11 @@ struct MenuBarView: View {
     .foregroundStyle(.white)
     .environment(\.colorScheme, .dark)
     .background {
-      MenuMaterialBackground()
+      FrostedPanelBackground()
     }
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .modifier(ClearWindowContainerBackground())
+    .background(TransparentPanelWindowConfigurator())
   }
 
   private var progressHero: some View {
@@ -215,19 +219,6 @@ struct MenuBarView: View {
       settingsWindow?.makeKeyAndOrderFront(nil)
     }
   }
-}
-
-private struct MenuMaterialBackground: NSViewRepresentable {
-  func makeNSView(context: Context) -> NSVisualEffectView {
-    let view = NSVisualEffectView()
-    view.material = .menu
-    view.blendingMode = .behindWindow
-    view.state = .active
-    view.appearance = NSAppearance(named: .darkAqua)
-    return view
-  }
-
-  func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
 
 private struct MenuPanelDismissal: NSViewRepresentable {

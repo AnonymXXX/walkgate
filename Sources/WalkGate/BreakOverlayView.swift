@@ -13,7 +13,16 @@ struct BreakOverlayView: View {
     }
     .padding(20)
     .frame(width: 300, height: 210, alignment: .topLeading)
-    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    .foregroundStyle(.white)
+    .environment(\.colorScheme, .dark)
+    .background {
+      FrostedPanelBackground()
+    }
+    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    .overlay {
+      RoundedRectangle(cornerRadius: 14, style: .continuous)
+        .strokeBorder(Color.white.opacity(0.07), lineWidth: 0.5)
+    }
   }
 
   private var completedContent: some View {
