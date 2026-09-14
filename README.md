@@ -9,13 +9,9 @@
 ## 界面预览
 
 <p align="center">
-  <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面"><br>
-  <sub>菜单栏主界面</sub>
-</p>
-
-<p align="center">
-  <img src="docs/images/walkgate-break-card.png" width="600" alt="WalkGate 休息提醒卡片"><br>
-  <sub>右下角休息提醒卡片</sub>
+  <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面" align="middle">
+  &nbsp;&nbsp;
+  <img src="docs/images/walkgate-break-card.png" width="360" alt="WalkGate 休息提醒卡片" align="middle">
 </p>
 
 ## 核心体验
