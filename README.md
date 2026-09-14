@@ -6,8 +6,16 @@
 
 > 当前版本：`0.2.0` · 支持 macOS 14 及以上版本
 
+## 界面预览
+
 <p align="center">
-  <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面">
+  <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面"><br>
+  <sub>菜单栏主界面</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/walkgate-break-card.png" width="600" alt="WalkGate 休息提醒卡片"><br>
+  <sub>右下角休息提醒卡片</sub>
 </p>
 
 ## 核心体验
