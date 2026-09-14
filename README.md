@@ -8,7 +8,7 @@
 
 普通倒计时很容易被忽略。WalkGate 会在工作周期结束后开启“休息闸门”：用低调的右下角卡片提示起身，并暂时拦截桌面操作。卡片弹出后立即开始休息倒计时；达到最低休息时长后继续记录额外休息时间，由你回来手动进入下一轮工作。
 
-> 当前版本：`0.3.1` · 支持 macOS 14 及以上版本
+> 当前版本：`0.3.2` · 支持 macOS 14 及以上版本
 
 ## 界面预览
 
@@ -47,7 +47,7 @@
 
 ## 安装
 
-下载 [WalkGate-v0.3.1-macOS-Universal.dmg](https://github.com/AnonymXXX/walkgate/releases/download/v0.3.1/WalkGate-v0.3.1-macOS-Universal.dmg)，打开后将 `WalkGate.app` 拖入“应用程序”。该安装包同时支持 Apple Silicon 与 Intel Mac。
+下载 [WalkGate-v0.3.2-macOS-Universal.dmg](https://github.com/AnonymXXX/walkgate/releases/download/v0.3.2/WalkGate-v0.3.2-macOS-Universal.dmg)，打开后将 `WalkGate.app` 拖入“应用程序”。该安装包同时支持 Apple Silicon 与 Intel Mac。
 
 ### 首次打开提示“Apple 无法验证”
 
