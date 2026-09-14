@@ -7,11 +7,25 @@ final class BreakOverlayCoordinator {
   private var windows: [NSWindow] = []
   private var isVisible = false
   private var screenObserver: NSObjectProtocol?
-  private var previousPresentationOptions: NSApplication.PresentationOptions?
+  private var activationObserver: NSObjectProtocol?
   private var previousApplication: NSRunningApplication?
 
   init(session: SessionController) {
     self.session = session
+    activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+    ) { [weak self] notification in
+      guard
+        let application = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
+          as? NSRunningApplication,
+        application.processIdentifier != ProcessInfo.processInfo.processIdentifier
+      else { return }
+      Task { @MainActor in
+        guard let self, self.isVisible else { return }
+        NSApp.activate(ignoringOtherApps: true)
+        self.windows.last?.makeKeyAndOrderFront(nil)
+      }
+    }
     screenObserver = NotificationCenter.default.addObserver(
       forName: NSApplication.didChangeScreenParametersNotification,
       object: nil,
@@ -25,6 +39,9 @@ final class BreakOverlayCoordinator {
   }
 
   deinit {
+    if let activationObserver {
+      NSWorkspace.shared.notificationCenter.removeObserver(activationObserver)
+    }
     if let screenObserver {
       NotificationCenter.default.removeObserver(screenObserver)
     }
@@ -33,11 +50,10 @@ final class BreakOverlayCoordinator {
   func show() {
     guard !isVisible else { return }
     previousApplication = NSWorkspace.shared.frontmostApplication
-    previousPresentationOptions = NSApp.presentationOptions
     isVisible = true
     NSApp.activate(ignoringOtherApps: true)
-    // Preserve the visible Dock/menu bar so visibleFrame excludes their occupied space.
-    NSApp.presentationOptions = [.disableProcessSwitching]
+    // Do not use disableProcessSwitching: AppKit requires hiding/autohiding the Dock.
+    // Shields and activation handling keep the break active without changing Dock settings.
     rebuildWindows()
   }
 
@@ -47,10 +63,6 @@ final class BreakOverlayCoordinator {
       window.orderOut(nil)
     }
     windows.removeAll()
-    if let previousPresentationOptions {
-      NSApp.presentationOptions = previousPresentationOptions
-    }
-    previousPresentationOptions = nil
     previousApplication?.activate(options: [])
     previousApplication = nil
   }
