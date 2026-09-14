@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 import WalkGateCore
 
@@ -150,6 +151,7 @@ struct SettingsView: View {
     }
     .formStyle(.grouped)
     .frame(width: 440, height: 590)
+    .background(InitialFocusResetter())
     .onReceive(session.$schedule) { schedule in
       draftSchedule = schedule
     }
@@ -202,5 +204,28 @@ struct SettingsView: View {
   private static func minute(from date: Date) -> Int {
     let calendar = Calendar.current
     return calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+  }
+}
+
+private struct InitialFocusResetter: NSViewRepresentable {
+  func makeNSView(context: Context) -> NSView {
+    InitialFocusResetView()
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private final class InitialFocusResetView: NSView {
+  override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
+    guard let window else { return }
+    clearInitialFocus(in: window)
+  }
+
+  private func clearInitialFocus(in window: NSWindow) {
+    DispatchQueue.main.async { [weak self, weak window] in
+      guard let self, let window, self.window === window else { return }
+      window.makeFirstResponder(nil)
+    }
   }
 }
