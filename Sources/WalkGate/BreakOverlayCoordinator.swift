@@ -32,7 +32,6 @@ final class BreakOverlayCoordinator {
     guard !isVisible else { return }
     isVisible = true
     rebuildWindows()
-    NSApp.activate(ignoringOtherApps: true)
   }
 
   func hide() {
@@ -50,29 +49,34 @@ final class BreakOverlayCoordinator {
     windows.removeAll()
     guard let session else { return }
 
-    for screen in NSScreen.screens {
+    if let screen = NSScreen.screens.first(where: {
+      NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
+    }) ?? NSScreen.main {
+      let area = screen.visibleFrame
+      let frame = NSRect(x: area.maxX - 320, y: area.minY + 20, width: 300, height: 210)
       let window = OverlayWindow(
-        contentRect: screen.frame,
-        styleMask: [.borderless],
+        contentRect: frame,
+        styleMask: [.borderless, .nonactivatingPanel],
         backing: .buffered,
         defer: false,
         screen: screen
       )
-      window.setFrame(screen.frame, display: true)
-      window.level = .screenSaver
+      window.setFrame(frame, display: true)
+      window.level = .floating
       window.backgroundColor = .clear
       window.isOpaque = false
-      window.hasShadow = false
+      window.hasShadow = true
+      window.hidesOnDeactivate = false
       window.acceptsMouseMovedEvents = true
       window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
       window.contentView = NSHostingView(rootView: BreakOverlayView(session: session))
-      window.makeKeyAndOrderFront(nil)
+      window.orderFrontRegardless()
       windows.append(window)
     }
   }
 }
 
-private final class OverlayWindow: NSWindow {
+private final class OverlayWindow: NSPanel {
   override var canBecomeKey: Bool { true }
-  override var canBecomeMain: Bool { true }
+  override var canBecomeMain: Bool { false }
 }

@@ -44,6 +44,7 @@ struct MenuBarView: View {
         .padding(.vertical, 10)
     }
     .frame(width: 320)
+    .background(MenuPanelDismissal(shouldDismiss: session.snapshot.phase == .breakGate))
     .foregroundStyle(.white)
     .environment(\.colorScheme, .dark)
     .background {
@@ -216,4 +217,17 @@ private struct MenuMaterialBackground: NSViewRepresentable {
   }
 
   func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+private struct MenuPanelDismissal: NSViewRepresentable {
+  let shouldDismiss: Bool
+
+  func makeNSView(context: Context) -> NSView { NSView() }
+
+  func updateNSView(_ view: NSView, context: Context) {
+    guard shouldDismiss else { return }
+    DispatchQueue.main.async { [weak view] in
+      view?.window?.orderOut(nil)
+    }
+  }
 }

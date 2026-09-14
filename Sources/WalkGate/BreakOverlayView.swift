@@ -5,7 +5,6 @@ struct BreakOverlayView: View {
 
   var body: some View {
     ZStack {
-      Color.black.opacity(0.10).ignoresSafeArea()
       VStack(alignment: .leading, spacing: 14) {
         Label(session.awaitingReturn ? "休息已达标" : "起来走一走", systemImage: "figure.walk")
           .font(.system(size: 15, weight: .medium))
@@ -34,9 +33,8 @@ struct BreakOverlayView: View {
         }
       }
       .padding(20)
-      .frame(width: 300, alignment: .leading)
+      .frame(width: 300, height: 210, alignment: .topLeading)
       .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-      .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
     }
   }
 }
