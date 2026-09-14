@@ -47,23 +47,7 @@ struct MenuBarView: View {
     .foregroundStyle(.white)
     .environment(\.colorScheme, .dark)
     .background {
-      ZStack {
-        Rectangle().fill(.ultraThinMaterial)
-        LinearGradient(
-          colors: [
-            Color.blue.opacity(0.24),
-            Color.clear,
-            Color.blue.opacity(0.13),
-          ],
-          startPoint: .topTrailing,
-          endPoint: .bottomLeading
-        )
-      }
-    }
-    .overlay {
-      RoundedRectangle(cornerRadius: 16)
-        .strokeBorder(.white.opacity(0.06), lineWidth: 0.5)
-        .allowsHitTesting(false)
+      MenuMaterialBackground()
     }
   }
 
@@ -215,4 +199,17 @@ struct MenuBarView: View {
       settingsWindow?.makeKeyAndOrderFront(nil)
     }
   }
+}
+
+private struct MenuMaterialBackground: NSViewRepresentable {
+  func makeNSView(context: Context) -> NSVisualEffectView {
+    let view = NSVisualEffectView()
+    view.material = .menu
+    view.blendingMode = .behindWindow
+    view.state = .active
+    view.appearance = NSAppearance(named: .darkAqua)
+    return view
+  }
+
+  func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }
