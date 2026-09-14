@@ -6,6 +6,10 @@
 
 > 当前版本：`0.2.0` · 支持 macOS 14 及以上版本
 
+<p align="center">
+  <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面">
+</p>
+
 ## 核心体验
 
 - **菜单栏常驻**：随时查看本轮剩余时间和进度，不占用 Dock 图标。
