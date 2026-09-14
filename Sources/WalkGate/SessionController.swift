@@ -37,7 +37,7 @@ final class SessionController: ObservableObject {
 
     let settings = SessionSettings(
       workSeconds: defaults.object(forKey: Keys.workSeconds) as? Int ?? 50 * 60,
-      breakSeconds: defaults.object(forKey: Keys.breakSeconds) as? Int ?? 2 * 60,
+      breakSeconds: defaults.object(forKey: Keys.breakSeconds) as? Int ?? 5 * 60,
       preAlertSeconds: defaults.object(forKey: Keys.preAlertSeconds) as? Int ?? 3 * 60,
       deferralSeconds: 5 * 60
     )

@@ -8,7 +8,7 @@ public struct SessionSettings: Equatable, Sendable {
 
   public init(
     workSeconds: Int = 50 * 60,
-    breakSeconds: Int = 2 * 60,
+    breakSeconds: Int = 5 * 60,
     preAlertSeconds: Int = 3 * 60,
     deferralSeconds: Int = 5 * 60
   ) {
