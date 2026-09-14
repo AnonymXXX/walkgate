@@ -2,51 +2,57 @@ import SwiftUI
 
 struct MenuBarView: View {
   @ObservedObject var session: SessionController
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var hoveredFooterAction: FooterAction?
+
+  private enum FooterAction {
+    case settings
+    case quit
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       header
-        .padding(20)
+        .padding(16)
 
       Divider()
 
       actionSection
-        .padding(20)
+        .padding(16)
 
       Divider()
 
       footer
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(6)
     }
-    .frame(width: 340)
+    .frame(width: 260)
     .background(.regularMaterial)
   }
 
   private var header: some View {
-    HStack(spacing: 18) {
+    HStack(spacing: 14) {
       ZStack {
         Circle()
-          .stroke(Color.secondary.opacity(0.16), lineWidth: 7)
+          .stroke(Color.secondary.opacity(0.16), lineWidth: 6)
         Circle()
           .trim(from: 0, to: max(0.015, session.progress))
           .stroke(
             Color.accentColor,
-            style: StrokeStyle(lineWidth: 7, lineCap: .round)
+            style: StrokeStyle(lineWidth: 6, lineCap: .round)
           )
           .rotationEffect(.degrees(-90))
 
         Image(systemName: session.snapshot.phase == .working ? "laptopcomputer" : "figure.walk")
-          .font(.system(size: 21, weight: .medium))
+          .font(.system(size: 18, weight: .medium))
           .foregroundStyle(Color.accentColor)
       }
-      .frame(width: 70, height: 70)
+      .frame(width: 58, height: 58)
 
       VStack(alignment: .leading, spacing: 5) {
         Text(session.snapshot.phase == .working ? "保持节奏" : "休息闸门已开启")
           .font(.headline)
         Text(session.formattedRemaining)
-          .font(.system(size: 29, weight: .semibold, design: .rounded).monospacedDigit())
+          .font(.system(size: 26, weight: .semibold, design: .rounded).monospacedDigit())
           .contentTransition(.numericText())
         Text(session.snapshot.phase == .working ? "距离下一次起身" : "离开键盘后开始倒计时")
           .font(.caption)
@@ -100,20 +106,47 @@ struct MenuBarView: View {
   }
 
   private var footer: some View {
-    HStack {
+    VStack(spacing: 2) {
       SettingsLink {
-        Label("设置", systemImage: "gearshape")
+        footerLabel("设置…", systemImage: "gearshape", action: .settings)
       }
       .buttonStyle(.plain)
+      .onHover { updateHover(.settings, isHovering: $0) }
 
-      Spacer()
-
-      Button("退出 WalkGate") {
+      Button {
         NSApplication.shared.terminate(nil)
+      } label: {
+        footerLabel("退出 WalkGate", systemImage: "power", action: .quit)
       }
       .buttonStyle(.plain)
-      .foregroundStyle(.secondary)
+      .onHover { updateHover(.quit, isHovering: $0) }
     }
-    .font(.caption)
+  }
+
+  private func footerLabel(
+    _ title: String,
+    systemImage: String,
+    action: FooterAction
+  ) -> some View {
+    Label(title, systemImage: systemImage)
+      .font(.system(size: 13, weight: .medium))
+      .foregroundStyle(hoveredFooterAction == action ? Color.white : Color.primary)
+      .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+      .padding(.horizontal, 10)
+      .background {
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+          .fill(hoveredFooterAction == action ? Color.accentColor : Color.clear)
+      }
+      .contentShape(Rectangle())
+  }
+
+  private func updateHover(_ action: FooterAction, isHovering: Bool) {
+    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.12)) {
+      if isHovering {
+        hoveredFooterAction = action
+      } else if hoveredFooterAction == action {
+        hoveredFooterAction = nil
+      }
+    }
   }
 }
