@@ -3,6 +3,7 @@ import SwiftUI
 struct MenuBarView: View {
   @ObservedObject var session: SessionController
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(\.openSettings) private var openSettings
   @State private var hoveredFooterAction: FooterAction?
 
   private enum FooterAction {
@@ -107,7 +108,9 @@ struct MenuBarView: View {
 
   private var footer: some View {
     VStack(spacing: 2) {
-      SettingsLink {
+      Button {
+        showSettings()
+      } label: {
         footerLabel("设置…", systemImage: "gearshape", action: .settings)
       }
       .buttonStyle(.plain)
@@ -147,6 +150,22 @@ struct MenuBarView: View {
       } else if hoveredFooterAction == action {
         hoveredFooterAction = nil
       }
+    }
+  }
+
+  private func showSettings() {
+    openSettings()
+    NSApplication.shared.activate(ignoringOtherApps: true)
+
+    DispatchQueue.main.async {
+      let application = NSApplication.shared
+      application.activate(ignoringOtherApps: true)
+
+      let settingsWindow = application.windows.first { window in
+        window.identifier?.rawValue == "com_apple_SwiftUI_Settings_window"
+          || window.title.localizedCaseInsensitiveContains("设置")
+      }
+      settingsWindow?.makeKeyAndOrderFront(nil)
     }
   }
 }
