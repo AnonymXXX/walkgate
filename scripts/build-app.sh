@@ -4,7 +4,7 @@ set -euo pipefail
 
 project_root="${0:A:h:h}"
 configuration="${1:-release}"
-app_path="$project_root/dist/WalkGate.app"
+app_path="${2:-$project_root/dist/WalkGate.app}"
 contents_path="$app_path/Contents"
 
 cd "$project_root"

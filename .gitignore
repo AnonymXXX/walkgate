@@ -1,5 +1,6 @@
 .build/
 .swiftpm/
 dist/
+dist-preview/
 .DS_Store
 *.xcuserstate

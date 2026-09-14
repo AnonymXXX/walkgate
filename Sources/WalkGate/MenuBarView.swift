@@ -13,68 +13,73 @@ struct MenuBarView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      VStack(spacing: 18) {
+      VStack(spacing: 14) {
         progressHero
 
         countdown
 
         primaryAction
 
-        if session.snapshot.phase == .working {
-          meetingMenu
-        }
       }
       .padding(.horizontal, 24)
-      .padding(.top, 26)
+      .padding(.top, 24)
       .padding(.bottom, 20)
 
       Divider()
 
       footer
-        .padding(8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
     }
-    .frame(width: 280)
+    .frame(width: 320)
+    .foregroundStyle(.white)
+    .environment(\.colorScheme, .dark)
     .background {
       ZStack {
-        Rectangle().fill(.regularMaterial)
+        Rectangle().fill(Color(red: 0.09, green: 0.13, blue: 0.19))
         LinearGradient(
           colors: [
-            Color.accentColor.opacity(0.12),
+            Color.blue.opacity(0.24),
             Color.clear,
-            Color.accentColor.opacity(0.04),
+            Color.blue.opacity(0.13),
           ],
           startPoint: .topTrailing,
           endPoint: .bottomLeading
         )
       }
     }
+    .overlay {
+      RoundedRectangle(cornerRadius: 16)
+        .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+        .allowsHitTesting(false)
+    }
   }
 
   private var progressHero: some View {
     ZStack {
       Circle()
-        .stroke(Color.secondary.opacity(0.16), lineWidth: 11)
+        .stroke(Color(red: 0.25, green: 0.31, blue: 0.39), lineWidth: 9)
 
       Circle()
         .trim(from: 0, to: remainingProgress)
         .stroke(
-          Color.accentColor,
-          style: StrokeStyle(lineWidth: 11, lineCap: .round)
+          LinearGradient(
+            colors: [Color(red: 0.16, green: 0.59, blue: 1), .blue], startPoint: .top,
+            endPoint: .bottom),
+          style: StrokeStyle(lineWidth: 9, lineCap: .round)
         )
         .rotationEffect(.degrees(-90))
         .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: session.progress)
 
-      Circle()
-        .fill(.ultraThinMaterial)
-        .frame(width: 84, height: 84)
-        .shadow(color: Color.accentColor.opacity(0.16), radius: 14)
-
-      Image(systemName: heroSymbol)
-        .font(.system(size: 40, weight: .medium))
-        .symbolRenderingMode(.hierarchical)
-        .foregroundStyle(Color.accentColor)
+      if session.snapshot.phase == .working {
+        CoffeeIllustration().frame(width: 52, height: 58)
+      } else {
+        Image(systemName: "figure.walk")
+          .font(.system(size: 38, weight: .medium))
+          .foregroundStyle(.blue)
+      }
     }
-    .frame(width: 154, height: 154)
+    .frame(width: 128, height: 128)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("剩余时间进度，\(session.formattedRemaining)")
   }
@@ -82,15 +87,15 @@ struct MenuBarView: View {
   private var countdown: some View {
     VStack(spacing: 7) {
       Text(session.snapshot.phase == .working ? "休息提醒" : "正在休息")
-        .font(.system(size: 22, weight: .semibold, design: .rounded))
+        .font(.system(size: 18, weight: .semibold))
 
       Text(session.formattedRemaining)
-        .font(.system(size: 45, weight: .bold, design: .rounded).monospacedDigit())
+        .font(.system(size: 42, weight: .bold).monospacedDigit())
         .contentTransition(.numericText())
 
       Text(countdownSubtitle)
-        .font(.system(size: 14, weight: .medium))
-        .foregroundStyle(.secondary)
+        .font(.system(size: 13, weight: .regular))
+        .foregroundStyle(Color(red: 0.66, green: 0.71, blue: 0.79))
     }
   }
 
@@ -100,11 +105,11 @@ struct MenuBarView: View {
       Button {
         session.startBreakNow()
       } label: {
-        Label("现在起来走走", systemImage: "figure.walk.motion")
-          .font(.system(size: 17, weight: .semibold))
-          .frame(maxWidth: .infinity, minHeight: 48)
+        Label("现在起来走走", systemImage: "figure.walk")
+          .font(.system(size: 16, weight: .semibold))
+          .frame(maxWidth: .infinity, minHeight: 42)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(WalkActionStyle())
       .buttonBorderShape(.capsule)
       .tint(.accentColor)
     } else {
@@ -115,25 +120,11 @@ struct MenuBarView: View {
           .font(.system(size: 17, weight: .semibold))
           .frame(maxWidth: .infinity, minHeight: 48)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(WalkActionStyle())
       .buttonBorderShape(.capsule)
       .tint(.accentColor)
       .disabled(session.snapshot.deferralUsed)
     }
-  }
-
-  private var meetingMenu: some View {
-    Menu {
-      Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
-      Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
-      Button("安静 90 分钟") { session.pauseForMeeting(minutes: 90) }
-    } label: {
-      Label("会议模式", systemImage: "video")
-        .font(.system(size: 13, weight: .medium))
-        .foregroundStyle(.secondary)
-    }
-    .menuStyle(.borderlessButton)
-    .fixedSize()
   }
 
   private var footer: some View {
@@ -145,6 +136,13 @@ struct MenuBarView: View {
       }
       .buttonStyle(.plain)
       .onHover { updateHover(.settings, isHovering: $0) }
+      .contextMenu {
+        Button("会议模式 · 30 分钟") { session.pauseForMeeting(minutes: 30) }
+        Button("会议模式 · 60 分钟") { session.pauseForMeeting(minutes: 60) }
+        Button("会议模式 · 90 分钟") { session.pauseForMeeting(minutes: 90) }
+      }
+
+      Spacer(minLength: 8)
 
       Button {
         NSApplication.shared.terminate(nil)
@@ -160,10 +158,6 @@ struct MenuBarView: View {
     max(0.015, 1 - session.progress)
   }
 
-  private var heroSymbol: String {
-    session.snapshot.phase == .working ? "cup.and.heat.waves.fill" : "figure.walk.motion"
-  }
-
   private var countdownSubtitle: String {
     if session.snapshot.phase == .working {
       return "距离下次休息"
@@ -177,9 +171,9 @@ struct MenuBarView: View {
     action: FooterAction
   ) -> some View {
     Label(title, systemImage: systemImage)
-      .font(.system(size: 12, weight: .medium))
-      .foregroundStyle(hoveredFooterAction == action ? Color.white : Color.primary)
-      .frame(maxWidth: .infinity, minHeight: 34)
+      .font(.system(size: 12, weight: .regular))
+      .foregroundStyle(hoveredFooterAction == action ? Color.white : Color.white.opacity(0.85))
+      .frame(minHeight: 30)
       .padding(.horizontal, 7)
       .background {
         RoundedRectangle(cornerRadius: 7, style: .continuous)
