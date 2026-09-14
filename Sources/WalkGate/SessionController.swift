@@ -98,6 +98,17 @@ final class SessionController: ObservableObject {
     overlayCoordinator?.hide()
   }
 
+  var awaitingReturn: Bool {
+    snapshot.phase == .breakGate && snapshot.remainingSeconds == 0
+  }
+
+  func resumeWork() {
+    guard engine.resumeWork() else { return }
+    publishSnapshot()
+    saveStats()
+    overlayCoordinator?.hide()
+  }
+
   func pauseForMeeting(minutes: Int) {
     engine.pauseForMeeting(seconds: minutes * 60)
     publishSnapshot()
@@ -168,9 +179,7 @@ final class SessionController: ObservableObject {
     case .breakBecameDue:
       overlayCoordinator?.show()
     case .breakCompleted:
-      saveStats()
-      overlayCoordinator?.hide()
-      NSSound(named: "Glass")?.play()
+      break
     case .none:
       break
     }

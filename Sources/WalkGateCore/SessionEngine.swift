@@ -96,17 +96,10 @@ public struct SessionEngine: Sendable {
       return .none
 
     case .breakGate:
-      guard isUserIdle else { return .none }
+      guard isUserIdle, snapshot.remainingSeconds > 0 else { return .none }
       let remaining = max(snapshot.remainingSeconds - 1, 0)
       if remaining == 0 {
-        phaseDuration = settings.workSeconds
-        snapshot = SessionSnapshot(
-          phase: .working,
-          remainingSeconds: settings.workSeconds,
-          deferralUsed: false,
-          completedBreaks: snapshot.completedBreaks + 1,
-          skippedBreaks: snapshot.skippedBreaks
-        )
+        snapshot = replacing(remainingSeconds: 0)
         return .breakCompleted
       }
 
@@ -118,6 +111,17 @@ public struct SessionEngine: Sendable {
   public mutating func startBreakNow() {
     phaseDuration = settings.breakSeconds
     snapshot = replacing(phase: .breakGate, remainingSeconds: settings.breakSeconds)
+  }
+
+  @discardableResult
+  public mutating func resumeWork() -> Bool {
+    guard snapshot.phase == .breakGate, snapshot.remainingSeconds == 0 else { return false }
+    phaseDuration = settings.workSeconds
+    snapshot = SessionSnapshot(
+      phase: .working, remainingSeconds: settings.workSeconds,
+      deferralUsed: false, completedBreaks: snapshot.completedBreaks + 1,
+      skippedBreaks: snapshot.skippedBreaks)
+    return true
   }
 
   @discardableResult

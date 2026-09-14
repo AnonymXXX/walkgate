@@ -49,8 +49,14 @@ final class SessionEngineTests: XCTestCase {
     XCTAssertEqual(engine.tick(isUserIdle: true), .none)
     XCTAssertEqual(engine.snapshot.remainingSeconds, 1)
     XCTAssertEqual(engine.tick(isUserIdle: true), .breakCompleted)
+    XCTAssertEqual(engine.snapshot.phase, .breakGate)
+    for _ in 0..<240 { XCTAssertEqual(engine.tick(isUserIdle: true), .none) }
+    XCTAssertEqual(engine.snapshot.remainingSeconds, 0)
+    XCTAssertEqual(engine.snapshot.completedBreaks, 0)
+    XCTAssertTrue(engine.resumeWork())
     XCTAssertEqual(engine.snapshot.phase, .working)
     XCTAssertEqual(engine.snapshot.completedBreaks, 1)
+    XCTAssertFalse(engine.resumeWork())
   }
 
   func testBreakCanOnlyBeDeferredOncePerCycle() {

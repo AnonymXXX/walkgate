@@ -97,7 +97,10 @@ struct MenuBarView: View {
 
   @ViewBuilder
   private var primaryAction: some View {
-    if session.snapshot.phase == .working {
+    if session.awaitingReturn {
+      Button("进入工作模式") { session.resumeWork() }
+        .buttonStyle(.bordered)
+    } else if session.snapshot.phase == .working {
       Button {
         session.startBreakNow()
       } label: {
@@ -151,6 +154,7 @@ struct MenuBarView: View {
   }
 
   private var countdownSubtitle: String {
+    if session.awaitingReturn { return "回来后点击进入工作模式" }
     if session.snapshot.phase == .working {
       return "距离下次休息"
     }
