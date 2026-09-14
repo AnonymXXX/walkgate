@@ -18,8 +18,10 @@ struct MenuBarView: View {
 
         countdown
 
-        primaryAction
-        if session.snapshot.phase == .working {
+        if !session.isSchedulePaused {
+          primaryAction
+        }
+        if !session.isSchedulePaused, session.snapshot.phase == .working {
           Menu {
             Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
             Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
@@ -68,7 +70,11 @@ struct MenuBarView: View {
         .rotationEffect(.degrees(-90))
         .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: session.progress)
 
-      if session.snapshot.phase == .working {
+      if session.isSchedulePaused {
+        Image(systemName: "clock.badge")
+          .font(.system(size: 38, weight: .medium))
+          .foregroundStyle(.blue)
+      } else if session.snapshot.phase == .working {
         CoffeeIllustration().frame(width: 52, height: 58)
       } else {
         Image(systemName: "figure.walk")
@@ -83,10 +89,14 @@ struct MenuBarView: View {
 
   private var countdown: some View {
     VStack(spacing: 7) {
-      Text(session.snapshot.phase == .working ? "休息提醒" : "正在休息")
-        .font(.system(size: 18, weight: .semibold))
+      Text(
+        session.isSchedulePaused
+          ? session.scheduleStatusTitle
+          : (session.snapshot.phase == .working ? "休息提醒" : "正在休息")
+      )
+      .font(.system(size: 18, weight: .semibold))
 
-      Text(session.formattedRemaining)
+      Text(session.isSchedulePaused ? session.scheduleStatusTime : session.formattedRemaining)
         .font(.system(size: 42, weight: .bold).monospacedDigit())
         .contentTransition(.numericText())
 
@@ -155,6 +165,7 @@ struct MenuBarView: View {
   }
 
   private var countdownSubtitle: String {
+    if session.isSchedulePaused { return session.scheduleStatusSubtitle }
     if session.awaitingReturn { return "回来后点击进入工作模式" }
     if session.snapshot.phase == .working {
       return "距离下次休息"

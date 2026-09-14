@@ -82,4 +82,21 @@ final class SessionEngineTests: XCTestCase {
     XCTAssertEqual(engine.snapshot.skippedBreaks, 1)
     XCTAssertEqual(engine.snapshot.completedBreaks, 0)
   }
+
+  func testFreshWorkCycleAfterLongSystemSleepPreservesStats() {
+    var engine = SessionEngine(settings: settings)
+    engine.startBreakNow()
+    engine.skipBreak()
+    engine.startBreakNow()
+    XCTAssertTrue(engine.deferBreak())
+
+    engine.startFreshWorkCycle()
+
+    XCTAssertEqual(engine.snapshot.phase, .working)
+    XCTAssertEqual(engine.snapshot.remainingSeconds, settings.workSeconds)
+    XCTAssertFalse(engine.snapshot.deferralUsed)
+    XCTAssertEqual(engine.snapshot.completedBreaks, 0)
+    XCTAssertEqual(engine.snapshot.skippedBreaks, 1)
+    XCTAssertEqual(engine.progress, 0)
+  }
 }

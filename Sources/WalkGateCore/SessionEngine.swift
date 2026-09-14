@@ -159,6 +159,17 @@ public struct SessionEngine: Sendable {
     )
   }
 
+  public mutating func startFreshWorkCycle() {
+    phaseDuration = settings.workSeconds
+    snapshot = SessionSnapshot(
+      phase: .working,
+      remainingSeconds: settings.workSeconds,
+      deferralUsed: false,
+      completedBreaks: snapshot.completedBreaks,
+      skippedBreaks: snapshot.skippedBreaks
+    )
+  }
+
   public mutating func updateSettings(_ settings: SessionSettings) {
     self.settings = settings
     let remaining = snapshot.phase == .working ? settings.workSeconds : settings.breakSeconds
