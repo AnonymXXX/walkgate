@@ -41,7 +41,26 @@
 
 ## 安装
 
-项目目前没有提供经过 Developer ID 公证的安装包。可以从源码构建本机临时签名版本：
+下载 [WalkGate-v0.2.0-macOS-Universal.dmg](https://github.com/AnonymXXX/walkgate/releases/download/v0.2.0/WalkGate-v0.2.0-macOS-Universal.dmg)，打开后将 `WalkGate.app` 拖入“应用程序”。该安装包同时支持 Apple Silicon 与 Intel Mac。
+
+### 首次打开提示“Apple 无法验证”
+
+<p align="center">
+  <img src="docs/images/macos-gatekeeper-warning.png" width="420" alt="macOS 无法验证 WalkGate 的安全提示">
+</p>
+
+当前安装包采用 ad-hoc 签名，尚未经过 Apple Developer ID 公证，因此首次打开时可能出现上图提示。请仅在确认安装包来自本仓库时继续：
+
+1. 在提示中点击“完成”，不要点击“移到废纸篓”。
+2. 打开“系统设置”→“隐私与安全性”。
+3. 向下滚动到“安全性”，找到被拦截的 WalkGate，点击“仍要打开”。
+4. 再次确认“打开”；完成一次授权后，后续可正常启动。
+
+这是 Apple 提供的单个 App 安全例外，不需要关闭系统“门禁”。详见 [Apple 官方说明：在 Mac 上安全地打开 App](https://support.apple.com/zh-cn/102445)。
+
+### 从源码构建
+
+也可以从源码构建本机临时签名版本：
 
 ```bash
 git clone https://github.com/AnonymXXX/walkgate.git
