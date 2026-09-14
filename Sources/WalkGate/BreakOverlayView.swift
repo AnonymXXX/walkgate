@@ -16,7 +16,8 @@ struct BreakOverlayView: View {
     .foregroundStyle(.white)
     .environment(\.colorScheme, .dark)
     .background {
-      FrostedPanelBackground()
+      FrostedPanelBackground(materialOpacity: 0.9)
+        .overlay(Color.black.opacity(0.08))
     }
     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     .overlay {
