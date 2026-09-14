@@ -79,7 +79,7 @@ public struct SessionEngine: Sendable {
   }
 
   @discardableResult
-  public mutating func tick(isUserIdle: Bool) -> SessionEvent {
+  public mutating func tick(isUserIdle _: Bool) -> SessionEvent {
     switch snapshot.phase {
     case .working:
       let remaining = max(snapshot.remainingSeconds - 1, 0)
@@ -96,14 +96,12 @@ public struct SessionEngine: Sendable {
       return .none
 
     case .breakGate:
-      guard isUserIdle, snapshot.remainingSeconds > 0 else { return .none }
-      let remaining = max(snapshot.remainingSeconds - 1, 0)
+      let remaining = snapshot.remainingSeconds - 1
+      snapshot = replacing(remainingSeconds: remaining)
       if remaining == 0 {
-        snapshot = replacing(remainingSeconds: 0)
         return .breakCompleted
       }
 
-      snapshot = replacing(remainingSeconds: remaining)
       return .none
     }
   }
@@ -115,7 +113,7 @@ public struct SessionEngine: Sendable {
 
   @discardableResult
   public mutating func resumeWork() -> Bool {
-    guard snapshot.phase == .breakGate, snapshot.remainingSeconds == 0 else { return false }
+    guard snapshot.phase == .breakGate, snapshot.remainingSeconds <= 0 else { return false }
     phaseDuration = settings.workSeconds
     snapshot = SessionSnapshot(
       phase: .working, remainingSeconds: settings.workSeconds,
@@ -126,7 +124,8 @@ public struct SessionEngine: Sendable {
 
   @discardableResult
   public mutating func deferBreak() -> Bool {
-    guard snapshot.phase == .breakGate, !snapshot.deferralUsed else { return false }
+    guard snapshot.phase == .breakGate, snapshot.remainingSeconds > 0, !snapshot.deferralUsed
+    else { return false }
     phaseDuration = settings.deferralSeconds
     snapshot = replacing(
       phase: .working,

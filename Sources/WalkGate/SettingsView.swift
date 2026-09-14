@@ -144,7 +144,7 @@ struct SettingsView: View {
       }
 
       Section {
-        Text("休息倒计时只会在键盘和鼠标连续 5 秒无操作后前进。每轮最多延迟一次，并始终保留紧急跳过。")
+        Text("休息卡片弹出后立即计时；达到最低休息时长后继续显示额外休息时间，回来后手动进入工作模式。每轮最多延迟一次，并始终保留紧急跳过。")
           .font(.caption)
           .foregroundStyle(.secondary)
       }

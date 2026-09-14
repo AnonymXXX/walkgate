@@ -13,9 +13,9 @@ final class SessionEngineTests: XCTestCase {
     engine.startBreakNow()
     XCTAssertEqual(engine.progress, 0)
     engine.tick(isUserIdle: false)
-    XCTAssertEqual(engine.progress, 0)
-    engine.tick(isUserIdle: true)
     XCTAssertEqual(engine.progress, 0.25)
+    engine.tick(isUserIdle: true)
+    XCTAssertEqual(engine.progress, 0.5)
     XCTAssertTrue(engine.deferBreak())
     XCTAssertEqual(engine.progress, 0)
     engine.tick(isUserIdle: false)
@@ -40,18 +40,27 @@ final class SessionEngineTests: XCTestCase {
     XCTAssertEqual(engine.snapshot.remainingSeconds, 2)
   }
 
-  func testBreakCountdownOnlyAdvancesWhileUserIsIdle() {
+  func testBreakCountdownStartsImmediatelyEvenWhileUserIsActive() {
     var engine = SessionEngine(settings: settings)
     engine.startBreakNow()
 
     XCTAssertEqual(engine.tick(isUserIdle: false), .none)
-    XCTAssertEqual(engine.snapshot.remainingSeconds, 2)
-    XCTAssertEqual(engine.tick(isUserIdle: true), .none)
     XCTAssertEqual(engine.snapshot.remainingSeconds, 1)
-    XCTAssertEqual(engine.tick(isUserIdle: true), .breakCompleted)
+  }
+
+  func testBreakCountdownContinuesPastZeroUntilManualResume() {
+    var engine = SessionEngine(settings: settings)
+    engine.startBreakNow()
+
+    XCTAssertEqual(engine.tick(isUserIdle: false), .none)
+    XCTAssertEqual(engine.snapshot.remainingSeconds, 1)
+    XCTAssertEqual(engine.tick(isUserIdle: false), .breakCompleted)
     XCTAssertEqual(engine.snapshot.phase, .breakGate)
-    for _ in 0..<240 { XCTAssertEqual(engine.tick(isUserIdle: true), .none) }
     XCTAssertEqual(engine.snapshot.remainingSeconds, 0)
+    XCTAssertEqual(engine.tick(isUserIdle: false), .none)
+    XCTAssertEqual(engine.snapshot.remainingSeconds, -1)
+    XCTAssertEqual(engine.tick(isUserIdle: true), .none)
+    XCTAssertEqual(engine.snapshot.remainingSeconds, -2)
     XCTAssertEqual(engine.snapshot.completedBreaks, 0)
     XCTAssertTrue(engine.resumeWork())
     XCTAssertEqual(engine.snapshot.phase, .working)

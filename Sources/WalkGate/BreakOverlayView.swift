@@ -34,6 +34,14 @@ struct BreakOverlayView: View {
       Text("回来后，再开始下一轮工作。")
         .font(.system(size: 12))
         .foregroundStyle(.secondary)
+      HStack(alignment: .firstTextBaseline) {
+        Text(session.formattedBreakOvertime)
+          .font(.system(size: 24, weight: .regular).monospacedDigit())
+        Spacer()
+        Text("额外休息")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
       Spacer(minLength: 0)
       HStack(spacing: 7) {
         Image(systemName: "pause.circle.fill")

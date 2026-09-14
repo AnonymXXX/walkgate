@@ -84,9 +84,16 @@ final class SessionController: ObservableObject {
   }
 
   var formattedRemaining: String {
-    let minutes = snapshot.remainingSeconds / 60
-    let seconds = snapshot.remainingSeconds % 60
-    return String(format: "%02d:%02d", minutes, seconds)
+    let elapsedPastTarget = snapshot.remainingSeconds < 0
+    let totalSeconds = abs(snapshot.remainingSeconds)
+    let minutes = totalSeconds / 60
+    let seconds = totalSeconds % 60
+    return String(format: "%@%02d:%02d", elapsedPastTarget ? "+" : "", minutes, seconds)
+  }
+
+  var formattedBreakOvertime: String {
+    let totalSeconds = abs(min(snapshot.remainingSeconds, 0))
+    return String(format: "+%02d:%02d", totalSeconds / 60, totalSeconds % 60)
   }
 
   var menuBarTitle: String {
@@ -148,7 +155,7 @@ final class SessionController: ObservableObject {
   }
 
   var awaitingReturn: Bool {
-    snapshot.phase == .breakGate && snapshot.remainingSeconds == 0
+    snapshot.phase == .breakGate && snapshot.remainingSeconds <= 0
   }
 
   func resumeWork() {

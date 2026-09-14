@@ -88,7 +88,7 @@ struct MenuBarView: View {
     }
     .frame(width: 128, height: 128)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("已完成 \(Int(session.progress * 100))%，剩余 \(session.formattedRemaining)")
+    .accessibilityLabel(progressAccessibilityLabel)
   }
 
   private var countdown: some View {
@@ -174,7 +174,14 @@ struct MenuBarView: View {
     if session.snapshot.phase == .working {
       return "距离下次休息"
     }
-    return session.isUserAway ? "保持离开键盘" : "离开键盘后继续倒计时"
+    return "休息计时进行中"
+  }
+
+  private var progressAccessibilityLabel: String {
+    if session.awaitingReturn {
+      return "休息已达标，额外休息 \(session.formattedBreakOvertime)"
+    }
+    return "已完成 \(Int(session.progress * 100))%，剩余 \(session.formattedRemaining)"
   }
 
   private func footerLabel(
