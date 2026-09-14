@@ -2,5 +2,6 @@
 .swiftpm/
 dist/
 dist-preview/
+dist-fixed/
 .DS_Store
 *.xcuserstate
