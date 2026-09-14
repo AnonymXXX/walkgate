@@ -36,7 +36,8 @@ final class BreakOverlayCoordinator {
     previousPresentationOptions = NSApp.presentationOptions
     isVisible = true
     NSApp.activate(ignoringOtherApps: true)
-    NSApp.presentationOptions = [.hideDock, .hideMenuBar, .disableProcessSwitching]
+    // Preserve the visible Dock/menu bar so visibleFrame excludes their occupied space.
+    NSApp.presentationOptions = [.disableProcessSwitching]
     rebuildWindows()
   }
 
@@ -83,6 +84,7 @@ final class BreakOverlayCoordinator {
       NSMouseInRect(NSEvent.mouseLocation, $0.frame, false)
     }) ?? NSScreen.main {
       let area = screen.visibleFrame
+      // Anchor above the Dock, rather than against the physical screen bottom.
       let frame = NSRect(x: area.maxX - 320, y: area.minY + 20, width: 300, height: 210)
       let window = OverlayWindow(
         contentRect: frame,
