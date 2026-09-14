@@ -12,102 +12,132 @@ struct MenuBarView: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      header
-        .padding(16)
+    VStack(spacing: 0) {
+      VStack(spacing: 18) {
+        progressHero
 
-      Divider()
+        countdown
 
-      actionSection
-        .padding(16)
+        primaryAction
+
+        if session.snapshot.phase == .working {
+          meetingMenu
+        }
+      }
+      .padding(.horizontal, 24)
+      .padding(.top, 26)
+      .padding(.bottom, 20)
 
       Divider()
 
       footer
-        .padding(6)
+        .padding(8)
     }
-    .frame(width: 260)
-    .background(.regularMaterial)
-  }
-
-  private var header: some View {
-    HStack(spacing: 14) {
+    .frame(width: 280)
+    .background {
       ZStack {
-        Circle()
-          .stroke(Color.secondary.opacity(0.16), lineWidth: 6)
-        Circle()
-          .trim(from: 0, to: max(0.015, session.progress))
-          .stroke(
-            Color.accentColor,
-            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-          )
-          .rotationEffect(.degrees(-90))
-
-        Image(systemName: session.snapshot.phase == .working ? "laptopcomputer" : "figure.walk")
-          .font(.system(size: 18, weight: .medium))
-          .foregroundStyle(Color.accentColor)
-      }
-      .frame(width: 58, height: 58)
-
-      VStack(alignment: .leading, spacing: 5) {
-        Text(session.snapshot.phase == .working ? "保持节奏" : "休息闸门已开启")
-          .font(.headline)
-        Text(session.formattedRemaining)
-          .font(.system(size: 26, weight: .semibold, design: .rounded).monospacedDigit())
-          .contentTransition(.numericText())
-        Text(session.snapshot.phase == .working ? "距离下一次起身" : "离开键盘后开始倒计时")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+        Rectangle().fill(.regularMaterial)
+        LinearGradient(
+          colors: [
+            Color.accentColor.opacity(0.12),
+            Color.clear,
+            Color.accentColor.opacity(0.04),
+          ],
+          startPoint: .topTrailing,
+          endPoint: .bottomLeading
+        )
       }
     }
   }
 
-  private var actionSection: some View {
-    VStack(spacing: 10) {
-      if session.snapshot.phase == .working {
-        Button {
-          session.startBreakNow()
-        } label: {
-          Label("现在起来走走", systemImage: "figure.walk.motion")
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+  private var progressHero: some View {
+    ZStack {
+      Circle()
+        .stroke(Color.secondary.opacity(0.16), lineWidth: 11)
 
-        Menu {
-          Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
-          Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
-          Button("安静 90 分钟") { session.pauseForMeeting(minutes: 90) }
-        } label: {
-          Label("会议模式", systemImage: "video")
-            .frame(maxWidth: .infinity)
-        }
-        .menuStyle(.borderlessButton)
-      } else {
-        Button {
-          session.deferBreak()
-        } label: {
-          Label("延迟 5 分钟", systemImage: "clock.arrow.circlepath")
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .disabled(session.snapshot.deferralUsed)
-      }
+      Circle()
+        .trim(from: 0, to: remainingProgress)
+        .stroke(
+          Color.accentColor,
+          style: StrokeStyle(lineWidth: 11, lineCap: .round)
+        )
+        .rotationEffect(.degrees(-90))
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.3), value: session.progress)
 
-      HStack {
-        Label("完成 \(session.snapshot.completedBreaks)", systemImage: "checkmark.circle")
-        Spacer()
-        Label("跳过 \(session.snapshot.skippedBreaks)", systemImage: "exclamationmark.circle")
-      }
-      .font(.caption)
-      .foregroundStyle(.secondary)
-      .padding(.top, 4)
+      Circle()
+        .fill(.ultraThinMaterial)
+        .frame(width: 84, height: 84)
+        .shadow(color: Color.accentColor.opacity(0.16), radius: 14)
+
+      Image(systemName: heroSymbol)
+        .font(.system(size: 40, weight: .medium))
+        .symbolRenderingMode(.hierarchical)
+        .foregroundStyle(Color.accentColor)
     }
+    .frame(width: 154, height: 154)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("剩余时间进度，\(session.formattedRemaining)")
+  }
+
+  private var countdown: some View {
+    VStack(spacing: 7) {
+      Text(session.snapshot.phase == .working ? "休息提醒" : "正在休息")
+        .font(.system(size: 22, weight: .semibold, design: .rounded))
+
+      Text(session.formattedRemaining)
+        .font(.system(size: 45, weight: .bold, design: .rounded).monospacedDigit())
+        .contentTransition(.numericText())
+
+      Text(countdownSubtitle)
+        .font(.system(size: 14, weight: .medium))
+        .foregroundStyle(.secondary)
+    }
+  }
+
+  @ViewBuilder
+  private var primaryAction: some View {
+    if session.snapshot.phase == .working {
+      Button {
+        session.startBreakNow()
+      } label: {
+        Label("现在起来走走", systemImage: "figure.walk.motion")
+          .font(.system(size: 17, weight: .semibold))
+          .frame(maxWidth: .infinity, minHeight: 48)
+      }
+      .buttonStyle(.borderedProminent)
+      .buttonBorderShape(.capsule)
+      .tint(.accentColor)
+    } else {
+      Button {
+        session.deferBreak()
+      } label: {
+        Label("延迟 5 分钟", systemImage: "clock.arrow.circlepath")
+          .font(.system(size: 17, weight: .semibold))
+          .frame(maxWidth: .infinity, minHeight: 48)
+      }
+      .buttonStyle(.borderedProminent)
+      .buttonBorderShape(.capsule)
+      .tint(.accentColor)
+      .disabled(session.snapshot.deferralUsed)
+    }
+  }
+
+  private var meetingMenu: some View {
+    Menu {
+      Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
+      Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
+      Button("安静 90 分钟") { session.pauseForMeeting(minutes: 90) }
+    } label: {
+      Label("会议模式", systemImage: "video")
+        .font(.system(size: 13, weight: .medium))
+        .foregroundStyle(.secondary)
+    }
+    .menuStyle(.borderlessButton)
+    .fixedSize()
   }
 
   private var footer: some View {
-    VStack(spacing: 2) {
+    HStack(spacing: 4) {
       Button {
         showSettings()
       } label: {
@@ -126,18 +156,33 @@ struct MenuBarView: View {
     }
   }
 
+  private var remainingProgress: Double {
+    max(0.015, 1 - session.progress)
+  }
+
+  private var heroSymbol: String {
+    session.snapshot.phase == .working ? "cup.and.heat.waves.fill" : "figure.walk.motion"
+  }
+
+  private var countdownSubtitle: String {
+    if session.snapshot.phase == .working {
+      return "距离下次休息"
+    }
+    return session.isUserAway ? "保持离开键盘" : "离开键盘后继续倒计时"
+  }
+
   private func footerLabel(
     _ title: String,
     systemImage: String,
     action: FooterAction
   ) -> some View {
     Label(title, systemImage: systemImage)
-      .font(.system(size: 13, weight: .medium))
+      .font(.system(size: 12, weight: .medium))
       .foregroundStyle(hoveredFooterAction == action ? Color.white : Color.primary)
-      .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-      .padding(.horizontal, 10)
+      .frame(maxWidth: .infinity, minHeight: 34)
+      .padding(.horizontal, 7)
       .background {
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
           .fill(hoveredFooterAction == action ? Color.accentColor : Color.clear)
       }
       .contentShape(Rectangle())
