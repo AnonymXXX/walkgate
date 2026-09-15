@@ -29,12 +29,13 @@ final class SessionController: ObservableObject {
   }
 
   private var engine: SessionEngine
+  private var refreshPolicy: SessionRefreshPolicy
   private var timer: Timer?
   private var overlayCoordinator: BreakOverlayCoordinator?
   private var workspaceObservers: [NSObjectProtocol] = []
   private var sleepStartedAt: Date?
   private var needsFreshCycleAfterWake = false
-  private var previousWorkdayState: WorkdayState
+  private var isMenuPresented = false
   private let defaults: UserDefaults
   private let calendar: Calendar
 
@@ -57,15 +58,16 @@ final class SessionController: ObservableObject {
       atMinute: Self.minuteOfDay(for: Date(), calendar: calendar))
     self.schedule = schedule
     self.workdayState = initialWorkdayState
-    self.previousWorkdayState = initialWorkdayState
 
     let today = Self.dayKey(for: Date(), calendar: calendar)
     let storedDay = defaults.string(forKey: Keys.statsDay)
     let completed = storedDay == today ? defaults.integer(forKey: Keys.completedBreaks) : 0
     let skipped = storedDay == today ? defaults.integer(forKey: Keys.skippedBreaks) : 0
-    self.engine = SessionEngine(
+    let engine = SessionEngine(
       settings: settings, completedBreaks: completed, skippedBreaks: skipped)
+    self.engine = engine
     self.snapshot = engine.snapshot
+    self.refreshPolicy = SessionRefreshPolicy(initialSnapshot: engine.snapshot)
 
     self.notificationsEnabled = defaults.object(forKey: Keys.notificationsEnabled) as? Bool ?? true
     self.launchAtLoginEnabled = SMAppService.mainApp.status == .enabled
@@ -137,19 +139,19 @@ final class SessionController: ObservableObject {
   func startBreakNow() {
     guard !isSchedulePaused else { return }
     engine.startBreakNow()
-    publishSnapshot()
+    publishSnapshot(force: true)
     overlayCoordinator?.show()
   }
 
   func deferBreak() {
     guard engine.deferBreak() else { return }
-    publishSnapshot()
+    publishSnapshot(force: true)
     overlayCoordinator?.hide()
   }
 
   func skipBreak() {
     engine.skipBreak()
-    publishSnapshot()
+    publishSnapshot(force: true)
     saveStats()
     overlayCoordinator?.hide()
   }
@@ -160,7 +162,7 @@ final class SessionController: ObservableObject {
 
   func resumeWork() {
     guard engine.resumeWork() else { return }
-    publishSnapshot()
+    publishSnapshot(force: true)
     saveStats()
     overlayCoordinator?.hide()
   }
@@ -168,14 +170,14 @@ final class SessionController: ObservableObject {
   func pauseForMeeting(minutes: Int) {
     guard !isSchedulePaused else { return }
     engine.pauseForMeeting(seconds: minutes * 60)
-    publishSnapshot()
+    publishSnapshot(force: true)
     overlayCoordinator?.hide()
   }
 
   func applySettings(_ settings: SessionSettings) {
     self.settings = settings
     engine.updateSettings(settings)
-    publishSnapshot()
+    publishSnapshot(force: true)
     defaults.set(settings.workSeconds, forKey: Keys.workSeconds)
     defaults.set(settings.breakSeconds, forKey: Keys.breakSeconds)
     defaults.set(settings.preAlertSeconds, forKey: Keys.preAlertSeconds)
@@ -216,14 +218,25 @@ final class SessionController: ObservableObject {
     }
   }
 
+  func setMenuPresented(_ presented: Bool) {
+    guard isMenuPresented != presented else { return }
+    isMenuPresented = presented
+    if presented {
+      publishSnapshot(force: true)
+    }
+  }
+
   private func start() {
-    guard timer == nil else { return }
     overlayCoordinator = BreakOverlayCoordinator(session: self)
     if notificationsEnabled {
       requestNotificationPermission()
     }
     observeSystemSleep()
+    startTimer()
+  }
 
+  private func startTimer() {
+    guard timer == nil else { return }
     let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
       Task { @MainActor in
         self?.tick()
@@ -233,12 +246,20 @@ final class SessionController: ObservableObject {
     RunLoop.main.add(timer, forMode: .common)
   }
 
+  private func stopTimer() {
+    timer?.invalidate()
+    timer = nil
+  }
+
   private func tick() {
     let idleSeconds = CGEventSource.secondsSinceLastEventType(
       .combinedSessionState,
       eventType: CGEventType(rawValue: UInt32.max)!
     )
-    isUserAway = idleSeconds >= 5
+    let userIsAway = idleSeconds >= 5
+    if isUserAway != userIsAway {
+      isUserAway = userIsAway
+    }
 
     let startedScheduledCycle = updateWorkdayState(at: Date())
     guard !isSchedulePaused else {
@@ -254,7 +275,7 @@ final class SessionController: ObservableObject {
       }
       needsFreshCycleAfterWake = false
       engine.startFreshWorkCycle()
-      publishSnapshot()
+      publishSnapshot(force: true)
       return
     }
 
@@ -273,20 +294,33 @@ final class SessionController: ObservableObject {
     }
   }
 
-  private func publishSnapshot() {
-    snapshot = engine.snapshot
+  private func publishSnapshot(force: Bool = false) {
+    let currentSnapshot = engine.snapshot
+    let isRealtimePresentationVisible =
+      isMenuPresented || overlayCoordinator?.isVisible == true
+    guard force
+      || refreshPolicy.shouldPublish(
+        currentSnapshot,
+        isRealtimePresentationVisible: isRealtimePresentationVisible
+      )
+    else { return }
+
+    refreshPolicy.markPublished(currentSnapshot)
+    snapshot = currentSnapshot
   }
 
   @discardableResult
   private func updateWorkdayState(at date: Date) -> Bool {
     let currentState = schedule.state(atMinute: Self.minuteOfDay(for: date, calendar: calendar))
-    previousWorkdayState = workdayState
-    workdayState = currentState
+    let previousState = workdayState
+    if previousState != currentState {
+      workdayState = currentState
+    }
 
-    guard previousWorkdayState != .working, currentState == .working else { return false }
+    guard previousState != .working, currentState == .working else { return false }
     needsFreshCycleAfterWake = false
     engine.startFreshWorkCycle()
-    publishSnapshot()
+    publishSnapshot(force: true)
     overlayCoordinator?.hide()
     return true
   }
@@ -300,6 +334,7 @@ final class SessionController: ObservableObject {
       ) { [weak self] _ in
         Task { @MainActor in
           self?.sleepStartedAt = Date()
+          self?.stopTimer()
         }
       })
     workspaceObservers.append(
@@ -307,7 +342,9 @@ final class SessionController: ObservableObject {
         forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
       ) { [weak self] _ in
         Task { @MainActor in
-          guard let self, let sleepStartedAt = self.sleepStartedAt else { return }
+          guard let self else { return }
+          defer { self.startTimer() }
+          guard let sleepStartedAt = self.sleepStartedAt else { return }
           self.sleepStartedAt = nil
           if Date().timeIntervalSince(sleepStartedAt) >= Double(self.settings.breakSeconds) {
             self.needsFreshCycleAfterWake = true

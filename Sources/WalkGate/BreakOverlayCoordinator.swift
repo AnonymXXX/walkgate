@@ -5,7 +5,7 @@ import SwiftUI
 final class BreakOverlayCoordinator {
   private weak var session: SessionController?
   private var windows: [NSWindow] = []
-  private var isVisible = false
+  private(set) var isVisible = false
   private var screenObserver: NSObjectProtocol?
   private var activationObserver: NSObjectProtocol?
   private var previousApplication: NSRunningApplication?

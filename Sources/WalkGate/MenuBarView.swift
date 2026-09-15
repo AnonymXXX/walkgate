@@ -56,6 +56,11 @@ struct MenuBarView: View {
     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     .modifier(ClearWindowContainerBackground())
     .background(TransparentPanelWindowConfigurator())
+    .background(
+      MenuPanelVisibilityObserver { isVisible in
+        session.setMenuPresented(isVisible)
+      }
+    )
   }
 
   private var progressHero: some View {
