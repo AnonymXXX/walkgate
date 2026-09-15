@@ -10,10 +10,12 @@ signing_identity="${LOCAL_APP_SIGNING_IDENTITY:-Local Mac App Code Signing}"
 contents_path="$app_path/Contents"
 build_options=(-c "$configuration")
 
-if ! /usr/bin/security find-identity -v -p codesigning 2>/dev/null \
-    | /usr/bin/grep -F "\"${signing_identity}\"" >/dev/null; then
-    echo "Signing identity not found: $signing_identity" >&2
-    exit 1
+if [[ "$signing_identity" != "-" ]]; then
+    if ! /usr/bin/security find-identity -v -p codesigning 2>/dev/null \
+        | /usr/bin/grep -F "\"${signing_identity}\"" >/dev/null; then
+        echo "Signing identity not found: $signing_identity" >&2
+        exit 1
+    fi
 fi
 
 case "$architecture" in

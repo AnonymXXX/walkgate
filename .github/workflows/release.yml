@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish Universal release
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Import signing certificate
+        env:
+          SIGNING_CERTIFICATE_BASE64: ${{ secrets.MACOS_SIGNING_CERTIFICATE }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_SIGNING_CERTIFICATE_PASSWORD }}
+          SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/walkgate-signing.p12"
+          certificate_pem_path="$RUNNER_TEMP/walkgate-signing.pem"
+          keychain_path="$RUNNER_TEMP/walkgate-signing.keychain-db"
+
+          printf '%s' "$SIGNING_CERTIFICATE_BASE64" | /usr/bin/base64 --decode > "$certificate_path"
+          /usr/bin/security create-keychain -p "$SIGNING_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security set-keychain-settings -lut 21600 "$keychain_path"
+          /usr/bin/security unlock-keychain -p "$SIGNING_KEYCHAIN_PASSWORD" "$keychain_path"
+          /usr/bin/security import "$certificate_path" \
+            -P "$SIGNING_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          /usr/bin/security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$SIGNING_KEYCHAIN_PASSWORD" \
+            "$keychain_path"
+          /usr/bin/security find-certificate \
+            -c "Local Mac App Code Signing" \
+            -p \
+            "$keychain_path" > "$certificate_pem_path"
+          /usr/bin/security add-trusted-cert \
+            -r trustRoot \
+            -k "$keychain_path" \
+            "$certificate_pem_path"
+          /usr/bin/security list-keychains -d user -s "$keychain_path"
+          /usr/bin/security find-identity -v -p codesigning "$keychain_path"
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build and verify release assets
+        env:
+          LOCAL_APP_SIGNING_IDENTITY: Local Mac App Code Signing
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: ./scripts/package-release.sh "$RELEASE_TAG"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          notes_path="docs/releases/$RELEASE_TAG.md"
+          dmg_path="dist/WalkGate-$RELEASE_TAG-macOS-Universal.dmg"
+          zip_path="dist/WalkGate-$RELEASE_TAG-macOS-Universal.zip"
+
+          if [[ ! -f "$notes_path" ]]; then
+            echo "Missing release notes: $notes_path" >&2
+            exit 67
+          fi
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" \
+              --title "WalkGate $RELEASE_TAG" \
+              --notes-file "$notes_path"
+            gh release upload "$RELEASE_TAG" "$dmg_path" "$zip_path" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$dmg_path" "$zip_path" \
+              --verify-tag \
+              --title "WalkGate $RELEASE_TAG" \
+              --notes-file "$notes_path"
+          fi
+
+      - name: Remove temporary signing material
+        if: always()
+        env:
+          SIGNING_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_SIGNING_KEYCHAIN_PASSWORD }}
+        run: |
+          certificate_path="$RUNNER_TEMP/walkgate-signing.p12"
+          certificate_pem_path="$RUNNER_TEMP/walkgate-signing.pem"
+          keychain_path="$RUNNER_TEMP/walkgate-signing.keychain-db"
+
+          if [[ -f "$keychain_path" ]]; then
+            /usr/bin/security delete-keychain "$keychain_path"
+          fi
+          if [[ -f "$certificate_path" ]]; then
+            /bin/rm -f "$certificate_path"
+          fi
+          if [[ -f "$certificate_pem_path" ]]; then
+            /bin/rm -f "$certificate_pem_path"
+          fi
