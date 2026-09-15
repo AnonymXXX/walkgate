@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -19,6 +25,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Import signing certificate
         env:
@@ -40,11 +48,6 @@ jobs:
             -t cert \
             -f pkcs12 \
             -k "$keychain_path"
-          /usr/bin/security set-key-partition-list \
-            -S apple-tool:,apple: \
-            -s \
-            -k "$SIGNING_KEYCHAIN_PASSWORD" \
-            "$keychain_path"
           /usr/bin/security find-certificate \
             -c "Local Mac App Code Signing" \
             -p \
@@ -62,13 +65,13 @@ jobs:
       - name: Build and verify release assets
         env:
           LOCAL_APP_SIGNING_IDENTITY: Local Mac App Code Signing
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: ./scripts/package-release.sh "$RELEASE_TAG"
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           notes_path="docs/releases/$RELEASE_TAG.md"
           dmg_path="dist/WalkGate-$RELEASE_TAG-macOS-Universal.dmg"
