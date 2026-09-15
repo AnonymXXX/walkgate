@@ -6,8 +6,15 @@ project_root="${0:A:h:h}"
 configuration="${1:-release}"
 app_path="${2:-$project_root/dist/WalkGate.app}"
 architecture="${3:-native}"
+signing_identity="${LOCAL_APP_SIGNING_IDENTITY:-Local Mac App Code Signing}"
 contents_path="$app_path/Contents"
 build_options=(-c "$configuration")
+
+if ! /usr/bin/security find-identity -v -p codesigning 2>/dev/null \
+    | /usr/bin/grep -F "\"${signing_identity}\"" >/dev/null; then
+    echo "Signing identity not found: $signing_identity" >&2
+    exit 1
+fi
 
 case "$architecture" in
     native)
@@ -33,6 +40,11 @@ fi
 /bin/cp "$bin_path/WalkGate" "$contents_path/MacOS/WalkGate"
 /bin/cp "$project_root/Info.plist" "$contents_path/Info.plist"
 /bin/cp "$project_root/Resources/WalkGateIcon.icns" "$contents_path/Resources/WalkGateIcon.icns"
-/usr/bin/codesign --force --deep --sign - "$app_path"
+/usr/bin/codesign \
+    --force \
+    --deep \
+    --sign "$signing_identity" \
+    --timestamp=none \
+    "$app_path"
 
 echo "$app_path"
