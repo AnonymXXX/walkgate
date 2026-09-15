@@ -52,9 +52,10 @@ jobs:
             -c "Local Mac App Code Signing" \
             -p \
             "$keychain_path" > "$certificate_pem_path"
-          /usr/bin/security add-trusted-cert \
+          /usr/bin/sudo /usr/bin/security add-trusted-cert \
+            -d \
             -r trustRoot \
-            -k "$keychain_path" \
+            -k /Library/Keychains/System.keychain \
             "$certificate_pem_path"
           /usr/bin/security list-keychains -d user -s "$keychain_path"
           /usr/bin/security find-identity -v -p codesigning "$keychain_path"
@@ -106,6 +107,9 @@ jobs:
           if [[ -f "$keychain_path" ]]; then
             /usr/bin/security delete-keychain "$keychain_path"
           fi
+          /usr/bin/sudo /usr/bin/security delete-certificate \
+            -c "Local Mac App Code Signing" \
+            /Library/Keychains/System.keychain 2>/dev/null || true
           if [[ -f "$certificate_path" ]]; then
             /bin/rm -f "$certificate_path"
           fi
