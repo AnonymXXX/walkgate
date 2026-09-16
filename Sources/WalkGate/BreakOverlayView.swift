@@ -81,7 +81,14 @@ struct BreakOverlayView: View {
         Spacer()
         Text("最低休息时长").font(.caption).foregroundStyle(.secondary)
       }
-      ProgressView(value: session.progress).tint(.secondary)
+      ProgressView(value: session.progress)
+        .tint(
+          LinearGradient(
+            colors: [Color(red: 0.16, green: 0.59, blue: 1), .blue],
+            startPoint: .leading,
+            endPoint: .trailing
+          )
+        )
       HStack {
         if !session.snapshot.deferralUsed {
           Button("延迟 5 分钟") { session.deferBreak() }
