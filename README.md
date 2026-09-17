@@ -59,7 +59,7 @@
   <img src="docs/images/macos-gatekeeper-warning.png" width="340" alt="macOS 无法验证 WalkGate 的安全提示">
 </p>
 
-当前安装包采用 ad-hoc 签名，尚未经过 Apple Developer ID 公证，因此首次打开时可能出现上图提示。请仅在确认安装包来自本仓库时继续：
+当前安装包采用本地自签名（未使用 Apple Developer ID），也未经 Apple 公证，因此首次打开时可能出现上图提示。请仅在确认安装包来自本仓库时继续：
 
 1. 在提示中点击“完成”，不要点击“移到废纸篓”。
 2. 打开“系统设置”→“隐私与安全性”。
@@ -77,6 +77,12 @@ git clone https://github.com/AnonymXXX/walkgate.git
 cd walkgate
 ./scripts/build-app.sh
 open dist/WalkGate.app
+```
+
+`scripts/build-app.sh` 默认使用本机钥匙串中名为 `Local Mac App Code Signing` 的证书签名；本机没有该证书时会报 `Signing identity not found` 并退出。此时可改用 ad-hoc 签名构建：
+
+```bash
+LOCAL_APP_SIGNING_IDENTITY=- ./scripts/build-app.sh
 ```
 
 如需安装到“应用程序”目录：
@@ -115,7 +121,7 @@ swift build -c release
 ./scripts/build-app.sh release
 ```
 
-构建脚本会生成经过 ad-hoc 签名的 `dist/WalkGate.app`。
+构建脚本会生成经过本地自签名（未使用 Apple Developer ID）的 `dist/WalkGate.app`；默认签名证书与配置方式见「从源码构建」一节。
 
 生成同时支持 Apple Silicon 与 Intel 的 Universal App：
 
@@ -126,10 +132,11 @@ swift build -c release
 ## 项目结构
 
 ```text
-Sources/WalkGate/          SwiftUI 与 AppKit 应用层
-Sources/WalkGateCore/      可测试的计时状态机
-Tests/WalkGateCoreTests/   核心行为测试
-scripts/build-app.sh       本地应用打包脚本
+Sources/WalkGate/           SwiftUI 与 AppKit 应用层
+Sources/WalkGateCore/       可测试的计时状态机与面板定位/刷新策略
+Tests/WalkGateCoreTests/    核心行为测试
+scripts/build-app.sh        本地应用打包脚本
+scripts/package-release.sh  发布包打包脚本（zip 与 dmg）
 ```
 
 WalkGate 使用 SwiftUI 构建主面板与设置界面，并用 AppKit 管理菜单栏项、窗口和跨显示器的休息卡片。项目不依赖第三方运行时库。
