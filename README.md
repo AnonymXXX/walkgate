@@ -15,6 +15,10 @@
 <p align="center">
   <img src="docs/images/walkgate-menu.png" width="320" alt="WalkGate 菜单栏主界面" align="middle">
   &nbsp;&nbsp;
+  <img src="docs/images/walkgate-off-hours.png" width="320" alt="WalkGate 工作时间外面板" align="middle">
+</p>
+
+<p align="center">
   <img src="docs/images/walkgate-break-card.png" width="360" alt="WalkGate 休息提醒卡片" align="middle">
 </p>
 
