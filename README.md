@@ -132,7 +132,7 @@ Tests/WalkGateCoreTests/   核心行为测试
 scripts/build-app.sh       本地应用打包脚本
 ```
 
-WalkGate 使用 SwiftUI 构建菜单栏和设置界面，并用 AppKit 管理跨显示器的休息窗口。项目不依赖第三方运行时库。
+WalkGate 使用 SwiftUI 构建主面板与设置界面，并用 AppKit 管理菜单栏项、窗口和跨显示器的休息卡片。项目不依赖第三方运行时库。
 
 ## 数据与隐私
 

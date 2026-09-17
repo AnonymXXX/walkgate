@@ -128,6 +128,18 @@ struct SettingsView: View {
           )
         )
 
+        if let hint = session.notificationPermissionHint {
+          VStack(alignment: .leading, spacing: 6) {
+            Text(hint)
+              .font(.caption)
+              .foregroundStyle(.orange)
+            Button("打开系统通知设置") {
+              session.openNotificationSettings()
+            }
+            .controlSize(.small)
+          }
+        }
+
         Toggle(
           "登录时自动启动",
           isOn: Binding(
@@ -152,6 +164,12 @@ struct SettingsView: View {
     .formStyle(.grouped)
     .frame(width: 440, height: 590)
     .background(InitialFocusResetter())
+    .background(ClickAwayFocusResetter())
+    .background(
+      SettingsWindowObserver {
+        draftSchedule = session.schedule
+      }
+    )
     .onReceive(session.$schedule) { schedule in
       draftSchedule = schedule
     }
@@ -204,6 +222,130 @@ struct SettingsView: View {
   private static func minute(from date: Date) -> Int {
     let calendar = Calendar.current
     return calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+  }
+}
+
+private struct SettingsWindowObserver: NSViewRepresentable {
+  let onWindowClose: () -> Void
+
+  func makeNSView(context: Context) -> NSView {
+    SettingsWindowObserverView(onWindowClose: onWindowClose)
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {
+    (nsView as? SettingsWindowObserverView)?.onWindowClose = onWindowClose
+  }
+}
+
+private final class SettingsWindowObserverView: NSView {
+  var onWindowClose: () -> Void
+
+  init(onWindowClose: @escaping () -> Void) {
+    self.onWindowClose = onWindowClose
+    super.init(frame: .zero)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
+    NotificationCenter.default.removeObserver(self)
+    if let window {
+      NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(windowWillClose),
+        name: NSWindow.willCloseNotification,
+        object: window
+      )
+    }
+  }
+
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
+  @objc private func windowWillClose() {
+    onWindowClose()
+  }
+}
+
+private struct ClickAwayFocusResetter: NSViewRepresentable {
+  func makeNSView(context: Context) -> NSView {
+    ClickAwayFocusResetView()
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private final class ClickAwayFocusResetView: NSView {
+  private var mouseMonitor: Any?
+
+  override func viewDidMoveToWindow() {
+    super.viewDidMoveToWindow()
+    if window == nil {
+      stopObserving()
+    } else {
+      startObserving()
+    }
+  }
+
+  deinit {
+    stopObserving()
+  }
+
+  private func startObserving() {
+    guard mouseMonitor == nil else { return }
+    mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) {
+      [weak self] event in
+      self?.clearFocusIfClickLandsOutsideFocusedControl(for: event)
+      return event
+    }
+    if let window {
+      NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(windowDidResignKey),
+        name: NSWindow.didResignKeyNotification,
+        object: window
+      )
+    }
+  }
+
+  private func stopObserving() {
+    if let monitor = mouseMonitor {
+      NSEvent.removeMonitor(monitor)
+      mouseMonitor = nil
+    }
+    NotificationCenter.default.removeObserver(self)
+  }
+
+  private func clearFocusIfClickLandsOutsideFocusedControl(for event: NSEvent) {
+    guard let window, event.window === window,
+      let contentView = window.contentView,
+      let focusedView = focusedControl(in: window)
+    else { return }
+
+    let point = contentView.convert(event.locationInWindow, from: nil)
+    if let hitView = contentView.hitTest(point),
+      hitView === focusedView || hitView.isDescendant(of: focusedView)
+    {
+      return
+    }
+    window.makeFirstResponder(nil)
+  }
+
+  private func focusedControl(in window: NSWindow) -> NSView? {
+    guard let responder = window.firstResponder as? NSView else { return nil }
+    if let fieldEditor = responder as? NSTextView {
+      return fieldEditor.superview ?? fieldEditor
+    }
+    return responder
+  }
+
+  @objc private func windowDidResignKey() {
+    window?.makeFirstResponder(nil)
   }
 }
 

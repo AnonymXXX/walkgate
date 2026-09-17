@@ -14,6 +14,7 @@ final class SessionController: ObservableObject {
   @Published private(set) var workdayState: WorkdayState
   @Published private(set) var isUserAway = false
   @Published var notificationsEnabled: Bool
+  @Published private(set) var notificationAuthorization: UNAuthorizationStatus = .notDetermined
   @Published var launchAtLoginEnabled: Bool
   @Published var settingsMessage: String?
 
@@ -199,7 +200,25 @@ final class SessionController: ObservableObject {
     notificationsEnabled = enabled
     defaults.set(enabled, forKey: Keys.notificationsEnabled)
     if enabled {
-      requestNotificationPermission()
+      synchronizeNotificationPermission()
+    }
+  }
+
+  var notificationPermissionHint: String? {
+    guard notificationsEnabled else { return nil }
+    switch notificationAuthorization {
+    case .denied:
+      return "系统通知权限已关闭，提前提醒不会显示。请在“系统设置 → 通知 → WalkGate”中允许通知。"
+    default:
+      return nil
+    }
+  }
+
+  func openNotificationSettings() {
+    let urlString =
+      "x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=com.y0num.walkgate"
+    if let url = URL(string: urlString) {
+      NSWorkspace.shared.open(url)
     }
   }
 
@@ -223,13 +242,23 @@ final class SessionController: ObservableObject {
     isMenuPresented = presented
     if presented {
       publishSnapshot(force: true)
+      if notificationsEnabled {
+        refreshNotificationAuthorization()
+      }
     }
+  }
+
+  func releaseFrontmostStatusIfNeeded() {
+    guard NSApp.isActive else { return }
+    NSApp.deactivate()
   }
 
   private func start() {
     overlayCoordinator = BreakOverlayCoordinator(session: self)
     if notificationsEnabled {
-      requestNotificationPermission()
+      synchronizeNotificationPermission()
+    } else {
+      refreshNotificationAuthorization()
     }
     observeSystemSleep()
     startTimer()
@@ -354,8 +383,29 @@ final class SessionController: ObservableObject {
       })
   }
 
-  private func requestNotificationPermission() {
-    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+  private func synchronizeNotificationPermission() {
+    UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+      let status = settings.authorizationStatus
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+        guard status == .notDetermined else {
+          self.notificationAuthorization = status
+          return
+        }
+        _ = try? await UNUserNotificationCenter.current().requestAuthorization(
+          options: [.alert, .sound])
+        self.refreshNotificationAuthorization()
+      }
+    }
+  }
+
+  private func refreshNotificationAuthorization() {
+    UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+      let status = settings.authorizationStatus
+      Task { @MainActor [weak self] in
+        self?.notificationAuthorization = status
+      }
+    }
   }
 
   private func sendPreBreakNotification() {

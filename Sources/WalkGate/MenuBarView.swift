@@ -2,8 +2,8 @@ import SwiftUI
 
 struct MenuBarView: View {
   @ObservedObject var session: SessionController
+  let onOpenSettings: () -> Void
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.openSettings) private var openSettings
   @State private var hoveredFooterAction: FooterAction?
 
   private enum FooterAction {
@@ -51,11 +51,9 @@ struct MenuBarView: View {
     .foregroundStyle(.white)
     .environment(\.colorScheme, .dark)
     .background {
-      FrostedPanelBackground()
+      FrostedPanelBackground(material: .popover, materialOpacity: 1)
     }
     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-    .modifier(ClearWindowContainerBackground())
-    .background(TransparentPanelWindowConfigurator())
     .background(
       MenuPanelVisibilityObserver { isVisible in
         session.setMenuPresented(isVisible)
@@ -217,19 +215,7 @@ struct MenuBarView: View {
   }
 
   private func showSettings() {
-    openSettings()
-    NSApplication.shared.activate(ignoringOtherApps: true)
-
-    DispatchQueue.main.async {
-      let application = NSApplication.shared
-      application.activate(ignoringOtherApps: true)
-
-      let settingsWindow = application.windows.first { window in
-        window.identifier?.rawValue == "com_apple_SwiftUI_Settings_window"
-          || window.title.localizedCaseInsensitiveContains("设置")
-      }
-      settingsWindow?.makeKeyAndOrderFront(nil)
-    }
+    onOpenSettings()
   }
 }
 

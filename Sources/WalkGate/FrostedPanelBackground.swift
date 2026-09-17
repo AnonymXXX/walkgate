@@ -23,18 +23,6 @@ struct FrostedPanelBackground: NSViewRepresentable {
   }
 }
 
-struct TransparentPanelWindowConfigurator: NSViewRepresentable {
-  func makeNSView(context: Context) -> NSView {
-    let view = WindowConfigurationView()
-    view.configureWindow()
-    return view
-  }
-
-  func updateNSView(_ view: NSView, context: Context) {
-    (view as? WindowConfigurationView)?.configureWindow()
-  }
-}
-
 struct MenuPanelVisibilityObserver: NSViewRepresentable {
   let onVisibilityChange: (Bool) -> Void
 
@@ -52,23 +40,6 @@ struct MenuPanelVisibilityObserver: NSViewRepresentable {
 
   static func dismantleNSView(_ view: NSView, coordinator: ()) {
     (view as? WindowVisibilityView)?.stopObserving()
-  }
-}
-
-private final class WindowConfigurationView: NSView {
-  override func viewDidMoveToWindow() {
-    super.viewDidMoveToWindow()
-    configureWindow()
-  }
-
-  func configureWindow() {
-    DispatchQueue.main.async { [weak self] in
-      guard let window = self?.window else { return }
-      window.isOpaque = false
-      window.backgroundColor = .clear
-      window.contentView?.wantsLayer = true
-      window.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
-    }
   }
 }
 
@@ -148,17 +119,6 @@ private final class WindowVisibilityView: NSView {
     let windowNumber = window.windowNumber
     return windowInfo.contains { info in
       (info[kCGWindowNumber as String] as? Int) == windowNumber
-    }
-  }
-}
-
-struct ClearWindowContainerBackground: ViewModifier {
-  @ViewBuilder
-  func body(content: Content) -> some View {
-    if #available(macOS 15.0, *) {
-      content.containerBackground(.clear, for: .window)
-    } else {
-      content
     }
   }
 }
