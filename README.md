@@ -1,5 +1,7 @@
 # WalkGate
 
+中文 | [English](README.en.md)
+
 <p align="center">
   <img src="Resources/WalkGateIcon.png" width="128" alt="WalkGate App 图标">
 </p>
