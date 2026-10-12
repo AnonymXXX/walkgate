@@ -13,32 +13,34 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
-      Section("节奏") {
-        Picker("连续工作", selection: settingBinding(\.workSeconds)) {
-          Text("25 分钟").tag(25 * 60)
-          Text("45 分钟").tag(45 * 60)
-          Text("50 分钟").tag(50 * 60)
-          Text("60 分钟").tag(60 * 60)
+      Section(L("节奏", "Rhythm")) {
+        Picker(L("连续工作", "Work duration"), selection: settingBinding(\.workSeconds)) {
+          Text(L("25 分钟", "25 min")).tag(25 * 60)
+          Text(L("45 分钟", "45 min")).tag(45 * 60)
+          Text(L("50 分钟", "50 min")).tag(50 * 60)
+          Text(L("60 分钟", "60 min")).tag(60 * 60)
         }
 
-        Picker("起身休息", selection: settingBinding(\.breakSeconds)) {
-          Text("2 分钟").tag(2 * 60)
-          Text("3 分钟").tag(3 * 60)
-          Text("5 分钟").tag(5 * 60)
+        Picker(L("起身休息", "Break duration"), selection: settingBinding(\.breakSeconds)) {
+          Text(L("2 分钟", "2 min")).tag(2 * 60)
+          Text(L("3 分钟", "3 min")).tag(3 * 60)
+          Text(L("5 分钟", "5 min")).tag(5 * 60)
         }
 
-        Picker("提前提醒", selection: settingBinding(\.preAlertSeconds)) {
-          Text("1 分钟").tag(1 * 60)
-          Text("3 分钟").tag(3 * 60)
-          Text("5 分钟").tag(5 * 60)
+        Picker(L("提前提醒", "Advance reminder"), selection: settingBinding(\.preAlertSeconds)) {
+          Text(L("1 分钟", "1 min")).tag(1 * 60)
+          Text(L("3 分钟", "3 min")).tag(3 * 60)
+          Text(L("5 分钟", "5 min")).tag(5 * 60)
         }
       }
 
-      Section("工作日程") {
-        Toggle("启用工作时间表", isOn: $draftSchedule.isEnabled)
+      Section(L("工作日程", "Work Schedule")) {
+        Toggle(L("启用工作时间表", "Enable work schedule"), isOn: $draftSchedule.isEnabled)
 
-        Picker("时区", selection: $draftSchedule.timeZoneIdentifier) {
-          Text("跟随系统（\(SessionController.timeZoneName(.autoupdatingCurrent))）")
+        Picker(L("时区", "Time zone"), selection: $draftSchedule.timeZoneIdentifier) {
+          Text(
+            L("跟随系统（%@）", "Follow System (%@)").replacingOccurrences(
+              of: "%@", with: SessionController.timeZoneName(.autoupdatingCurrent)))
             .tag(String?.none)
           Divider()
           ForEach(Self.timeZoneOptions, id: \.identifier) { option in
@@ -47,9 +49,9 @@ struct SettingsView: View {
         }
         .disabled(!draftSchedule.isEnabled)
 
-        LabeledContent("上班时间") {
+        LabeledContent(L("上班时间", "Start of work")) {
           DatePicker(
-            "上班时间",
+            L("上班时间", "Start of work"),
             selection: timeBinding(
               get: { draftSchedule.workStartMinute },
               set: { draftSchedule.workStartMinute = $0 }),
@@ -59,9 +61,9 @@ struct SettingsView: View {
         }
         .disabled(!draftSchedule.isEnabled)
 
-        LabeledContent("下班时间") {
+        LabeledContent(L("下班时间", "End of work")) {
           DatePicker(
-            "下班时间",
+            L("下班时间", "End of work"),
             selection: timeBinding(
               get: { draftSchedule.workEndMinute },
               set: { draftSchedule.workEndMinute = $0 }),
@@ -74,20 +76,20 @@ struct SettingsView: View {
         if draftSchedule.isEnabled {
           ForEach($draftSchedule.restPeriods) { $period in
             HStack(spacing: 8) {
-              Text("休息")
+              Text(L("休息", "Break"))
               Spacer()
               DatePicker(
-                "开始",
+                L("开始", "Start"),
                 selection: timeBinding(
                   get: { period.startMinute },
                   set: { period.startMinute = $0 }),
                 displayedComponents: .hourAndMinute
               )
               .labelsHidden()
-              Text("至")
+              Text(L("至", "to"))
                 .foregroundStyle(.secondary)
               DatePicker(
-                "结束",
+                L("结束", "End"),
                 selection: timeBinding(
                   get: { period.endMinute },
                   set: { period.endMinute = $0 }),
@@ -101,7 +103,7 @@ struct SettingsView: View {
               }
               .buttonStyle(.plain)
               .foregroundStyle(.secondary)
-              .help("删除这个休息时段")
+              .help(L("删除这个休息时段", "Remove this break period"))
             }
           }
 
@@ -109,7 +111,7 @@ struct SettingsView: View {
             draftSchedule.restPeriods.append(
               DailyRestPeriod(startMinute: 15 * 60 + 30, endMinute: 15 * 60 + 45))
           } label: {
-            Label("添加休息时段", systemImage: "plus")
+            Label(L("添加休息时段", "Add break period"), systemImage: "plus")
           }
         }
 
@@ -121,7 +123,7 @@ struct SettingsView: View {
 
         HStack {
           Spacer()
-          Button("保存日程") {
+          Button(L("保存日程", "Save Schedule")) {
             session.applySchedule(draftSchedule)
             draftSchedule = session.schedule
           }
@@ -129,9 +131,9 @@ struct SettingsView: View {
         }
       }
 
-      Section("系统") {
+      Section(L("系统", "System")) {
         Toggle(
-          "允许提醒通知",
+          L("允许提醒通知", "Allow notifications"),
           isOn: Binding(
             get: { session.notificationsEnabled },
             set: { session.setNotificationsEnabled($0) }
@@ -143,7 +145,7 @@ struct SettingsView: View {
             Text(hint)
               .font(.caption)
               .foregroundStyle(.orange)
-            Button("打开系统通知设置") {
+            Button(L("打开系统通知设置", "Open Notification Settings")) {
               session.openNotificationSettings()
             }
             .controlSize(.small)
@@ -151,7 +153,7 @@ struct SettingsView: View {
         }
 
         Toggle(
-          "登录时自动启动",
+          L("登录时自动启动", "Launch at login"),
           isOn: Binding(
             get: { session.launchAtLoginEnabled },
             set: { session.setLaunchAtLoginEnabled($0) }
@@ -166,7 +168,11 @@ struct SettingsView: View {
       }
 
       Section {
-        Text("休息卡片弹出后立即计时；达到最低休息时长后继续显示额外休息时间，回来后手动进入工作模式。每轮最多延迟一次，并始终保留紧急跳过。")
+        Text(
+          L(
+            "休息卡片弹出后立即计时；达到最低休息时长后继续显示额外休息时间，回来后手动进入工作模式。每轮最多延迟一次，并始终保留紧急跳过。",
+            "The break timer starts as soon as the break card appears. After the minimum break, extra break time keeps counting until you return and resume work manually. Each round can be postponed once, and emergency skip is always available."
+          ))
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -199,14 +205,16 @@ struct SettingsView: View {
   private var scheduleValidationMessage: String? {
     guard draftSchedule.isEnabled else { return nil }
     guard draftSchedule.workStartMinute < draftSchedule.workEndMinute else {
-      return "下班时间需要晚于上班时间。"
+      return L("下班时间需要晚于上班时间。", "End of work must be later than start of work.")
     }
     if draftSchedule.restPeriods.contains(where: {
       $0.startMinute >= $0.endMinute
         || $0.startMinute < draftSchedule.workStartMinute
         || $0.endMinute > draftSchedule.workEndMinute
     }) {
-      return "休息时段需要位于工作时间内，且结束时间晚于开始时间。"
+      return L(
+        "休息时段需要位于工作时间内，且结束时间晚于开始时间。",
+        "Break periods must fall within work hours and end after they start.")
     }
     return nil
   }

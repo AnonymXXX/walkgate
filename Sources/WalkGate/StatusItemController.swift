@@ -182,7 +182,7 @@ final class StatusItemController {
 
   private func updateAccessibilityLabel() {
     guard let button = statusItem.button else { return }
-    button.setAccessibilityLabel("WalkGate，剩余 \(session.menuBarTitle)")
+    button.setAccessibilityLabel(L("WalkGate，剩余 ", "WalkGate, remaining ") + session.menuBarTitle)
   }
 
   private func handleActiveSpaceChange() {

@@ -28,17 +28,17 @@ struct BreakOverlayView: View {
 
   private var completedContent: some View {
     VStack(alignment: .leading, spacing: 10) {
-      Label("休息已达标", systemImage: "checkmark.circle.fill")
+      Label(L("休息已达标", "Break Complete"), systemImage: "checkmark.circle.fill")
         .font(.system(size: 15, weight: .semibold))
         .symbolRenderingMode(.hierarchical)
-      Text("回来后，再开始下一轮工作。")
+      Text(L("回来后，再开始下一轮工作。", "Start the next round when you’re back."))
         .font(.system(size: 12))
         .foregroundStyle(.secondary)
       HStack(alignment: .firstTextBaseline) {
         Text(session.formattedBreakOvertime)
           .font(.system(size: 24, weight: .regular).monospacedDigit())
         Spacer()
-        Text("额外休息")
+        Text(L("额外休息", "Extra break"))
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -47,9 +47,9 @@ struct BreakOverlayView: View {
         Image(systemName: "pause.circle.fill")
           .foregroundStyle(.secondary)
           .accessibilityHidden(true)
-        Text("计时已停止")
+        Text(L("计时已停止", "Timer stopped"))
         Spacer()
-        Text("等待返回")
+        Text(L("等待返回", "Waiting for you"))
           .foregroundStyle(.tertiary)
       }
       .font(.caption)
@@ -59,27 +59,27 @@ struct BreakOverlayView: View {
       Button {
         session.resumeWork()
       } label: {
-        Text("进入工作模式")
+        Text(L("进入工作模式", "Resume Work"))
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent)
       .controlSize(.regular)
-      .accessibilityHint("开始新的工作计时")
+      .accessibilityHint(L("开始新的工作计时", "Start a new work timer"))
     }
   }
 
   private var activeBreakContent: some View {
     VStack(alignment: .leading, spacing: 14) {
-      Label("起来走一走", systemImage: "figure.walk")
+      Label(L("起来走一走", "Get Up and Walk"), systemImage: "figure.walk")
         .font(.system(size: 15, weight: .medium))
-      Text("放下键鼠，走动一会儿。")
+      Text(L("放下键鼠，走动一会儿。", "Step away from the keyboard and move around."))
         .font(.system(size: 12))
         .foregroundStyle(.secondary)
       HStack {
         Text(session.formattedRemaining)
           .font(.system(size: 24, weight: .regular).monospacedDigit())
         Spacer()
-        Text("最低休息时长").font(.caption).foregroundStyle(.secondary)
+        Text(L("最低休息时长", "Minimum break")).font(.caption).foregroundStyle(.secondary)
       }
       ProgressView(value: session.progress)
         .tint(
@@ -91,9 +91,9 @@ struct BreakOverlayView: View {
         )
       HStack {
         if !session.snapshot.deferralUsed {
-          Button("延迟 5 分钟") { session.deferBreak() }
+          Button(L("延迟 5 分钟", "Postpone 5 min")) { session.deferBreak() }
         }
-        Button("紧急跳过") { session.skipBreak() }
+        Button(L("紧急跳过", "Emergency Skip")) { session.skipBreak() }
       }
       .buttonStyle(.bordered)
       .controlSize(.small)

@@ -23,11 +23,11 @@ struct MenuBarView: View {
         }
         if !session.isSchedulePaused, session.snapshot.phase == .working {
           Menu {
-            Button("安静 30 分钟") { session.pauseForMeeting(minutes: 30) }
-            Button("安静 60 分钟") { session.pauseForMeeting(minutes: 60) }
-            Button("安静 90 分钟") { session.pauseForMeeting(minutes: 90) }
+            Button(L("安静 30 分钟", "Quiet for 30 min")) { session.pauseForMeeting(minutes: 30) }
+            Button(L("安静 60 分钟", "Quiet for 60 min")) { session.pauseForMeeting(minutes: 60) }
+            Button(L("安静 90 分钟", "Quiet for 90 min")) { session.pauseForMeeting(minutes: 90) }
           } label: {
-            Label("会议模式", systemImage: "video")
+            Label(L("会议模式", "Meeting Mode"), systemImage: "video")
               .font(.system(size: 13))
           }
           .menuStyle(.borderlessButton)
@@ -99,7 +99,7 @@ struct MenuBarView: View {
       Text(
         session.isSchedulePaused
           ? session.scheduleStatusTitle
-          : (session.snapshot.phase == .working ? "休息提醒" : "正在休息")
+          : (session.snapshot.phase == .working ? L("休息提醒", "Break Reminder") : L("正在休息", "On Break"))
       )
       .font(.system(size: 18, weight: .semibold))
 
@@ -116,13 +116,13 @@ struct MenuBarView: View {
   @ViewBuilder
   private var primaryAction: some View {
     if session.awaitingReturn {
-      Button("进入工作模式") { session.resumeWork() }
+      Button(L("进入工作模式", "Resume Work")) { session.resumeWork() }
         .buttonStyle(.bordered)
     } else if session.snapshot.phase == .working {
       Button {
         session.startBreakNow()
       } label: {
-        Label("现在起来走走", systemImage: "figure.walk")
+        Label(L("现在起来走走", "Take a Walk Now"), systemImage: "figure.walk")
           .font(.system(size: 16, weight: .semibold))
           .frame(maxWidth: .infinity, minHeight: 42)
       }
@@ -133,7 +133,7 @@ struct MenuBarView: View {
       Button {
         session.deferBreak()
       } label: {
-        Label("延迟 5 分钟", systemImage: "clock.arrow.circlepath")
+        Label(L("延迟 5 分钟", "Postpone 5 min"), systemImage: "clock.arrow.circlepath")
           .font(.system(size: 17, weight: .semibold))
           .frame(maxWidth: .infinity, minHeight: 48)
       }
@@ -149,14 +149,14 @@ struct MenuBarView: View {
       Button {
         showSettings()
       } label: {
-        footerLabel("设置…", systemImage: "gearshape", action: .settings)
+        footerLabel(L("设置…", "Settings…"), systemImage: "gearshape", action: .settings)
       }
       .buttonStyle(.plain)
       .onHover { updateHover(.settings, isHovering: $0) }
       .contextMenu {
-        Button("会议模式 · 30 分钟") { session.pauseForMeeting(minutes: 30) }
-        Button("会议模式 · 60 分钟") { session.pauseForMeeting(minutes: 60) }
-        Button("会议模式 · 90 分钟") { session.pauseForMeeting(minutes: 90) }
+        Button(L("会议模式 · 30 分钟", "Meeting Mode · 30 min")) { session.pauseForMeeting(minutes: 30) }
+        Button(L("会议模式 · 60 分钟", "Meeting Mode · 60 min")) { session.pauseForMeeting(minutes: 60) }
+        Button(L("会议模式 · 90 分钟", "Meeting Mode · 90 min")) { session.pauseForMeeting(minutes: 90) }
       }
 
       Spacer(minLength: 8)
@@ -164,7 +164,7 @@ struct MenuBarView: View {
       Button {
         NSApplication.shared.terminate(nil)
       } label: {
-        footerLabel("退出 WalkGate", systemImage: "power", action: .quit)
+        footerLabel(L("退出 WalkGate", "Quit WalkGate"), systemImage: "power", action: .quit)
       }
       .buttonStyle(.plain)
       .onHover { updateHover(.quit, isHovering: $0) }
@@ -173,18 +173,21 @@ struct MenuBarView: View {
 
   private var countdownSubtitle: String {
     if session.isSchedulePaused { return session.scheduleStatusSubtitle }
-    if session.awaitingReturn { return "回来后点击进入工作模式" }
+    if session.awaitingReturn { return L("回来后点击进入工作模式", "Click Resume Work when you’re back") }
     if session.snapshot.phase == .working {
-      return "距离下次休息"
+      return L("距离下次休息", "Until next break")
     }
-    return "休息计时进行中"
+    return L("休息计时进行中", "Break in progress")
   }
 
   private var progressAccessibilityLabel: String {
     if session.awaitingReturn {
-      return "休息已达标，额外休息 \(session.formattedBreakOvertime)"
+      return L("休息已达标，额外休息 ", "Break complete, extra ") + session.formattedBreakOvertime
     }
-    return "已完成 \(Int(session.progress * 100))%，剩余 \(session.formattedRemaining)"
+    let percent = Int(session.progress * 100)
+    return L(
+      "已完成 \(percent)%，剩余 \(session.formattedRemaining)",
+      "\(percent)% done, \(session.formattedRemaining) left")
   }
 
   private func footerLabel(

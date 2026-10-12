@@ -98,10 +98,10 @@ final class SessionController: ObservableObject {
 
   var menuBarTitle: String {
     if isSchedulePaused {
-      return workdayState == .resting ? "休息" : "下班"
+      return workdayState == .resting ? L("休息", "Break") : L("下班", "Off")
     }
     return snapshot.phase == .working
-      ? "\(max(1, Int(ceil(Double(snapshot.remainingSeconds) / 60))))m" : "走一走"
+      ? "\(max(1, Int(ceil(Double(snapshot.remainingSeconds) / 60))))m" : L("走一走", "Walk")
   }
 
   var progress: Double {
@@ -113,7 +113,7 @@ final class SessionController: ObservableObject {
   }
 
   var scheduleStatusTitle: String {
-    workdayState == .resting ? "日程休息" : "工作时间外"
+    workdayState == .resting ? L("日程休息", "Scheduled break") : L("工作时间外", "Off hours")
   }
 
   var scheduleStatusTime: String {
@@ -128,16 +128,19 @@ final class SessionController: ObservableObject {
 
   var scheduleStatusSubtitle: String {
     if workdayState == .resting {
-      return "结束后开始完整工作周期"
+      return L("结束后开始完整工作周期", "A full work cycle starts afterwards")
     }
     let minute = schedule.minuteOfDay(for: Date())
-    let subtitle = minute < schedule.workStartMinute ? "到点后自动开始计时" : "今天不再发送休息提醒"
+    let subtitle =
+      minute < schedule.workStartMinute
+      ? L("到点后自动开始计时", "Timer starts automatically at work time")
+      : L("今天不再发送休息提醒", "No more break reminders today")
     guard schedule.timeZoneIdentifier != nil else { return subtitle }
     return "\(subtitle) · \(Self.timeZoneName(schedule.timeZone))"
   }
 
   static func timeZoneName(_ timeZone: TimeZone) -> String {
-    timeZone.localizedName(for: .generic, locale: Locale(identifier: "zh_CN"))
+    timeZone.localizedName(for: .generic, locale: AppLanguage.locale)
       ?? timeZone.identifier
   }
 
@@ -195,7 +198,7 @@ final class SessionController: ObservableObject {
       defaults.set(data, forKey: Keys.schedule)
       settingsMessage = nil
     } else {
-      settingsMessage = "无法保存工作日程。"
+      settingsMessage = L("无法保存工作日程。", "Unable to save the work schedule.")
     }
     _ = updateWorkdayState(at: Date())
   }
@@ -212,7 +215,10 @@ final class SessionController: ObservableObject {
     guard notificationsEnabled else { return nil }
     switch notificationAuthorization {
     case .denied:
-      return "系统通知权限已关闭，提前提醒不会显示。请在“系统设置 → 通知 → WalkGate”中允许通知。"
+      return L(
+        "系统通知权限已关闭，提前提醒不会显示。请在“系统设置 → 通知 → WalkGate”中允许通知。",
+        "Notifications are turned off, so advance reminders won’t appear. Allow them in System Settings → Notifications → WalkGate."
+      )
     default:
       return nil
     }
@@ -234,10 +240,12 @@ final class SessionController: ObservableObject {
         try SMAppService.mainApp.unregister()
       }
       launchAtLoginEnabled = SMAppService.mainApp.status == .enabled
-      settingsMessage = launchAtLoginEnabled == enabled ? nil : "系统尚未完成登录项状态更新。"
+      settingsMessage = launchAtLoginEnabled == enabled ? nil
+        : L("系统尚未完成登录项状态更新。", "The system hasn’t finished updating the login item yet.")
     } catch {
       launchAtLoginEnabled = SMAppService.mainApp.status == .enabled
-      settingsMessage = "无法更新登录启动：\(error.localizedDescription)"
+      settingsMessage =
+        L("无法更新登录启动：", "Unable to update launch at login: ") + error.localizedDescription
     }
   }
 
@@ -416,8 +424,9 @@ final class SessionController: ObservableObject {
     guard notificationsEnabled else { return }
     let content = UNMutableNotificationContent()
     let minutes = max(1, Int(ceil(Double(settings.preAlertSeconds) / 60)))
-    content.title = "还有 \(minutes) 分钟"
-    content.body = "先保存一下工作，下一轮休息马上开始。"
+    content.title = L("还有 \(minutes) 分钟", "\(minutes) min left")
+    content.body = L(
+      "先保存一下工作，下一轮休息马上开始。", "Save your work — your next break is about to start.")
     content.sound = .default
     let request = UNNotificationRequest(
       identifier: UUID().uuidString, content: content, trigger: nil)

@@ -31,7 +31,7 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
       backing: .buffered,
       defer: false
     )
-    window.title = "WalkGate设置"
+    window.title = L("WalkGate 设置", "WalkGate Settings")
     window.isReleasedWhenClosed = false
     window.delegate = self
     window.contentViewController = NSHostingController(rootView: SettingsView(session: session))

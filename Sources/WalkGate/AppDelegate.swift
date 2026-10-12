@@ -31,29 +31,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     mainMenu.addItem(appMenuItem)
     let appMenu = NSMenu()
     appMenu.addItem(
-      withTitle: "隐藏 WalkGate", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+      withTitle: L("隐藏 WalkGate", "Hide WalkGate"), action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
     let hideOthersItem = appMenu.addItem(
-      withTitle: "隐藏其他", action: #selector(NSApplication.hideOtherApplications(_:)),
+      withTitle: L("隐藏其他", "Hide Others"), action: #selector(NSApplication.hideOtherApplications(_:)),
       keyEquivalent: "h")
     hideOthersItem.keyEquivalentModifierMask = [.command, .option]
     appMenu.addItem(
-      withTitle: "全部显示", action: #selector(NSApplication.unhideAllApplications(_:)),
+      withTitle: L("全部显示", "Show All"), action: #selector(NSApplication.unhideAllApplications(_:)),
       keyEquivalent: "")
     appMenu.addItem(.separator())
     appMenu.addItem(
-      withTitle: "退出 WalkGate", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+      withTitle: L("退出 WalkGate", "Quit WalkGate"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     appMenuItem.submenu = appMenu
 
-    let editMenuItem = NSMenuItem(title: "编辑", action: nil, keyEquivalent: "")
+    let editMenuItem = NSMenuItem(title: L("编辑", "Edit"), action: nil, keyEquivalent: "")
     mainMenu.addItem(editMenuItem)
-    let editMenu = NSMenu(title: "编辑")
-    editMenu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-    editMenu.addItem(withTitle: "重做", action: Selector(("redo:")), keyEquivalent: "Z")
+    let editMenu = NSMenu(title: L("编辑", "Edit"))
+    editMenu.addItem(withTitle: L("撤销", "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+    editMenu.addItem(withTitle: L("重做", "Redo"), action: Selector(("redo:")), keyEquivalent: "Z")
     editMenu.addItem(.separator())
-    editMenu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-    editMenu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-    editMenu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-    editMenu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+    editMenu.addItem(withTitle: L("剪切", "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+    editMenu.addItem(withTitle: L("拷贝", "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+    editMenu.addItem(withTitle: L("粘贴", "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+    editMenu.addItem(withTitle: L("全选", "Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
     editMenuItem.submenu = editMenu
 
     NSApp.mainMenu = mainMenu
