@@ -33,7 +33,7 @@ Plain countdown timers are easy to ignore. WalkGate opens a "break gate" at the 
 - **Manual resume**: the next round never starts by itself; click "Enter work mode" when you're back.
 - **Reasonable exceptions**: each round can be deferred once, and an emergency skip is always available.
 - **Meeting mode**: choose 30, 60, or 90 quiet minutes when you need uninterrupted focus.
-- **Configurable work schedule**: set work start/end times and add lunch breaks or other rest periods; reminders pause during rest, and work restarts with a full session.
+- **Configurable work schedule**: set work start/end times and add lunch breaks or other rest periods; the schedule follows the system time zone by default or can be pinned to a specific one; reminders pause during rest, and work restarts with a full session.
 - **Sleep recovery**: if the Mac slept for at least the minimum break duration, waking up starts a full work cycle — no stand-up reminder the moment you open the lid.
 - **Native system integration**: pre-break notifications, launch at login, and dark material effects that follow macOS.
 

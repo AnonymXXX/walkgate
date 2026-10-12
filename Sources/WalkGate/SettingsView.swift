@@ -37,6 +37,16 @@ struct SettingsView: View {
       Section("工作日程") {
         Toggle("启用工作时间表", isOn: $draftSchedule.isEnabled)
 
+        Picker("时区", selection: $draftSchedule.timeZoneIdentifier) {
+          Text("跟随系统（\(SessionController.timeZoneName(.autoupdatingCurrent))）")
+            .tag(String?.none)
+          Divider()
+          ForEach(Self.timeZoneOptions, id: \.identifier) { option in
+            Text(option.label).tag(Optional(option.identifier))
+          }
+        }
+        .disabled(!draftSchedule.isEnabled)
+
         LabeledContent("上班时间") {
           DatePicker(
             "上班时间",
@@ -210,6 +220,24 @@ struct SettingsView: View {
       set: { set(Self.minute(from: $0)) }
     )
   }
+
+  private static let timeZoneOptions: [(identifier: String, label: String)] = {
+    let now = Date()
+    return TimeZone.knownTimeZoneIdentifiers
+      .compactMap(TimeZone.init(identifier:))
+      .sorted {
+        let lhs = $0.secondsFromGMT(for: now)
+        let rhs = $1.secondsFromGMT(for: now)
+        return lhs == rhs ? $0.identifier < $1.identifier : lhs < rhs
+      }
+      .map { timeZone in
+        let offset = timeZone.secondsFromGMT(for: now) / 60
+        let label = String(
+          format: "UTC%@%02d:%02d  %@", offset < 0 ? "-" : "+", abs(offset) / 60,
+          abs(offset) % 60, timeZone.identifier)
+        return (timeZone.identifier, label)
+      }
+  }()
 
   private static func date(forMinute minute: Int) -> Date {
     var calendar = Calendar(identifier: .gregorian)

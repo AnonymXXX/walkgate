@@ -38,11 +38,9 @@ final class SessionController: ObservableObject {
   private var needsFreshCycleAfterWake = false
   private var isMenuPresented = false
   private let defaults: UserDefaults
-  private let calendar: Calendar
 
-  init(defaults: UserDefaults = .standard, calendar: Calendar = .current) {
+  init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
-    self.calendar = calendar
 
     let settings = SessionSettings(
       workSeconds: defaults.object(forKey: Keys.workSeconds) as? Int ?? 50 * 60,
@@ -55,12 +53,11 @@ final class SessionController: ObservableObject {
     let storedSchedule = defaults.data(forKey: Keys.schedule)
       .flatMap { try? JSONDecoder().decode(DailyWorkSchedule.self, from: $0) }
     let schedule = (storedSchedule ?? .defaultSchedule).normalized()
-    let initialWorkdayState = schedule.state(
-      atMinute: Self.minuteOfDay(for: Date(), calendar: calendar))
+    let initialWorkdayState = schedule.state(atMinute: schedule.minuteOfDay(for: Date()))
     self.schedule = schedule
     self.workdayState = initialWorkdayState
 
-    let today = Self.dayKey(for: Date(), calendar: calendar)
+    let today = schedule.dayKey(for: Date())
     let storedDay = defaults.string(forKey: Keys.statsDay)
     let completed = storedDay == today ? defaults.integer(forKey: Keys.completedBreaks) : 0
     let skipped = storedDay == today ? defaults.integer(forKey: Keys.skippedBreaks) : 0
@@ -120,7 +117,7 @@ final class SessionController: ObservableObject {
   }
 
   var scheduleStatusTime: String {
-    let minute = Self.minuteOfDay(for: Date(), calendar: calendar)
+    let minute = schedule.minuteOfDay(for: Date())
     if workdayState == .resting,
       let period = schedule.activeRestPeriod(atMinute: minute)
     {
@@ -133,8 +130,15 @@ final class SessionController: ObservableObject {
     if workdayState == .resting {
       return "结束后开始完整工作周期"
     }
-    let minute = Self.minuteOfDay(for: Date(), calendar: calendar)
-    return minute < schedule.workStartMinute ? "到点后自动开始计时" : "今天不再发送休息提醒"
+    let minute = schedule.minuteOfDay(for: Date())
+    let subtitle = minute < schedule.workStartMinute ? "到点后自动开始计时" : "今天不再发送休息提醒"
+    guard schedule.timeZoneIdentifier != nil else { return subtitle }
+    return "\(subtitle) · \(Self.timeZoneName(schedule.timeZone))"
+  }
+
+  static func timeZoneName(_ timeZone: TimeZone) -> String {
+    timeZone.localizedName(for: .generic, locale: Locale(identifier: "zh_CN"))
+      ?? timeZone.identifier
   }
 
   func startBreakNow() {
@@ -340,7 +344,7 @@ final class SessionController: ObservableObject {
 
   @discardableResult
   private func updateWorkdayState(at date: Date) -> Bool {
-    let currentState = schedule.state(atMinute: Self.minuteOfDay(for: date, calendar: calendar))
+    let currentState = schedule.state(atMinute: schedule.minuteOfDay(for: date))
     let previousState = workdayState
     if previousState != currentState {
       workdayState = currentState
@@ -421,19 +425,9 @@ final class SessionController: ObservableObject {
   }
 
   private func saveStats() {
-    defaults.set(Self.dayKey(for: Date(), calendar: calendar), forKey: Keys.statsDay)
+    defaults.set(schedule.dayKey(for: Date()), forKey: Keys.statsDay)
     defaults.set(snapshot.completedBreaks, forKey: Keys.completedBreaks)
     defaults.set(snapshot.skippedBreaks, forKey: Keys.skippedBreaks)
-  }
-
-  private static func dayKey(for date: Date, calendar: Calendar) -> String {
-    let parts = calendar.dateComponents([.year, .month, .day], from: date)
-    return "\(parts.year ?? 0)-\(parts.month ?? 0)-\(parts.day ?? 0)"
-  }
-
-  private static func minuteOfDay(for date: Date, calendar: Calendar) -> Int {
-    let parts = calendar.dateComponents([.hour, .minute], from: date)
-    return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
   }
 
   private static func formatMinute(_ minute: Int) -> String {

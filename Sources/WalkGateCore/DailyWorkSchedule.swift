@@ -23,17 +23,41 @@ public struct DailyWorkSchedule: Codable, Equatable, Sendable {
   public var workStartMinute: Int
   public var workEndMinute: Int
   public var restPeriods: [DailyRestPeriod]
+  /// IANA identifier the schedule times are interpreted in; `nil` follows the system time zone.
+  public var timeZoneIdentifier: String?
 
   public init(
     isEnabled: Bool,
     workStartMinute: Int,
     workEndMinute: Int,
-    restPeriods: [DailyRestPeriod]
+    restPeriods: [DailyRestPeriod],
+    timeZoneIdentifier: String? = nil
   ) {
     self.isEnabled = isEnabled
     self.workStartMinute = workStartMinute
     self.workEndMinute = workEndMinute
     self.restPeriods = restPeriods
+    self.timeZoneIdentifier = timeZoneIdentifier
+  }
+
+  public var timeZone: TimeZone {
+    timeZoneIdentifier.flatMap(TimeZone.init(identifier:)) ?? .autoupdatingCurrent
+  }
+
+  public var calendar: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+    return calendar
+  }
+
+  public func minuteOfDay(for date: Date) -> Int {
+    let parts = calendar.dateComponents([.hour, .minute], from: date)
+    return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
+  }
+
+  public func dayKey(for date: Date) -> String {
+    let parts = calendar.dateComponents([.year, .month, .day], from: date)
+    return "\(parts.year ?? 0)-\(parts.month ?? 0)-\(parts.day ?? 0)"
   }
 
   public static let defaultSchedule = DailyWorkSchedule(
@@ -86,7 +110,8 @@ public struct DailyWorkSchedule: Codable, Equatable, Sendable {
       isEnabled: isEnabled,
       workStartMinute: start,
       workEndMinute: end,
-      restPeriods: periods
+      restPeriods: periods,
+      timeZoneIdentifier: timeZoneIdentifier.flatMap(TimeZone.init(identifier:))?.identifier
     )
   }
 }
